@@ -1,0 +1,699 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<meta name="theme-color" content="#0C447C">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="Cash Book">
+<title>Restaurant Cash Book</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Nunito:wght@600;700;800;900&family=Nunito+Sans:wght@400;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@latest/tabler-icons.min.css">
+<style>
+  :root {
+    --bg: #f4f6f9;
+    --card: #ffffff;
+    --border: rgba(0,0,0,0.10);
+    --border-strong: rgba(0,0,0,0.18);
+    --text: #1a1a2e;
+    --text2: #5a6478;
+    --text3: #8a94a6;
+    --input-bg: #f0f4f8;
+    --blue: #0C447C;
+    --blue-mid: #185FA5;
+    --blue-light: #E6F1FB;
+    --blue-border: #B5D4F4;
+    --green: #0F6E56;
+    --green-light: #E1F5EE;
+    --red: #A32D2D;
+    --red-light: #FCEBEB;
+    --purple: #3C3489;
+    --radius: 14px;
+    --radius-sm: 8px;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; }
+  body {
+    font-family: 'Nunito Sans', sans-serif;
+    background: var(--bg);
+    color: var(--text);
+    min-height: 100vh;
+    overscroll-behavior: none;
+  }
+  .app { max-width: 480px; margin: 0 auto; min-height: 100vh; display: flex; flex-direction: column; background: var(--bg); }
+
+  /* HEADER */
+  .header {
+    background: var(--blue);
+    padding: 18px 18px 14px;
+    position: sticky; top: 0; z-index: 100;
+  }
+  .header-title {
+    font-family: 'Nunito', sans-serif;
+    font-size: 22px; font-weight: 900; color: #fff;
+    display: flex; align-items: center; gap: 10px; letter-spacing: -0.3px;
+  }
+  .header-title i { font-size: 24px; }
+  .header-sub { font-size: 13px; color: #B5D4F4; margin-top: 3px; font-weight: 600; }
+
+  /* TABS */
+  .tabs {
+    display: flex;
+    background: var(--card);
+    border-bottom: 1px solid var(--border);
+    position: sticky; top: 66px; z-index: 99;
+  }
+  .tab {
+    flex: 1; padding: 12px 4px;
+    font-size: 12px; font-weight: 800; font-family: 'Nunito', sans-serif;
+    border: none; background: transparent; color: var(--text2);
+    cursor: pointer; border-bottom: 3px solid transparent;
+    display: flex; align-items: center; justify-content: center; gap: 4px;
+    transition: all 0.15s;
+  }
+  .tab i { font-size: 15px; }
+  .tab.active { color: var(--blue-mid); border-bottom-color: var(--blue-mid); background: var(--blue-light); }
+
+  /* VIEWS */
+  .view { display: none; padding: 14px; padding-bottom: 40px; }
+  .view.active { display: block; }
+
+  /* SECTION CARDS */
+  .sc {
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    margin-bottom: 14px;
+    overflow: hidden;
+    box-shadow: 0 1px 4px rgba(0,0,0,0.06);
+  }
+  .sh {
+    padding: 12px 16px;
+    border-bottom: 1px solid var(--border);
+    display: flex; align-items: center; justify-content: space-between;
+    background: var(--blue-light);
+  }
+  .sh-left {
+    display: flex; align-items: center; gap: 8px;
+    font-family: 'Nunito', sans-serif; font-size: 16px; font-weight: 800; color: var(--blue);
+  }
+  .sh-left i { font-size: 18px; color: var(--blue-mid); }
+  .sh-right { font-size: 12px; color: var(--blue-mid); font-weight: 600; }
+
+  /* INPUT ROWS */
+  .irow {
+    display: flex; align-items: center;
+    padding: 12px 16px;
+    border-bottom: 1px solid var(--border);
+    gap: 12px;
+  }
+  .irow:last-child { border-bottom: none; }
+  .ilabel {
+    font-size: 15px; font-weight: 700; font-family: 'Nunito', sans-serif;
+    color: var(--text); flex: 1; display: flex; align-items: center; gap: 9px;
+  }
+  .ilabel i { font-size: 20px; flex-shrink: 0; }
+  .ilabel-sub { font-size: 11px; color: var(--text3); display: block; font-weight: 600; font-family: 'Nunito Sans', sans-serif; margin-top: 1px; }
+  .amount-input {
+    width: 120px; padding: 10px 12px;
+    font-size: 18px; font-weight: 800; font-family: 'Nunito', sans-serif;
+    border: 2px solid var(--border-strong);
+    border-radius: var(--radius-sm);
+    background: var(--input-bg); color: var(--text);
+    text-align: right; outline: none;
+    transition: border-color 0.15s, box-shadow 0.15s;
+  }
+  .amount-input:focus { border-color: var(--blue-mid); box-shadow: 0 0 0 3px rgba(24,95,165,0.15); }
+
+  /* DATE ROW */
+  .date-row {
+    display: flex; align-items: center;
+    padding: 12px 16px; gap: 10px;
+    border-bottom: 1px solid var(--border);
+  }
+  .date-input {
+    flex: 1; padding: 10px 12px;
+    font-size: 15px; font-weight: 700; font-family: 'Nunito', sans-serif;
+    border: 2px solid var(--border-strong); border-radius: var(--radius-sm);
+    background: var(--input-bg); color: var(--text); outline: none;
+  }
+  .date-input:focus { border-color: var(--blue-mid); box-shadow: 0 0 0 3px rgba(24,95,165,0.15); }
+  .today-btn {
+    padding: 10px 14px; font-size: 13px; font-weight: 800; font-family: 'Nunito', sans-serif;
+    border: 2px solid var(--blue-mid); border-radius: var(--radius-sm);
+    background: transparent; color: var(--blue-mid); cursor: pointer; white-space: nowrap;
+  }
+  .today-btn:active { background: var(--blue-light); }
+
+  /* EXPENSE ENTRY */
+  .exp-entry-row {
+    display: flex; align-items: center;
+    padding: 11px 16px; border-bottom: 1px solid var(--border); gap: 12px;
+  }
+  .exp-entry-row:last-child { border-bottom: none; }
+  .exp-name-tag {
+    flex: 1; font-size: 15px; font-weight: 700; font-family: 'Nunito', sans-serif;
+    color: var(--text); display: flex; align-items: center; gap: 8px;
+  }
+  .exp-name-tag i { font-size: 14px; color: var(--blue-mid); flex-shrink: 0; }
+
+  /* TEMPLATE ROWS */
+  .tmpl-row {
+    display: flex; gap: 10px; align-items: center;
+    padding: 10px 16px; border-bottom: 1px solid var(--border);
+  }
+  .tmpl-row:last-of-type { border-bottom: none; }
+  .tmpl-in {
+    flex: 1; padding: 10px 12px; font-size: 15px; font-weight: 700; font-family: 'Nunito', sans-serif;
+    border: 2px solid var(--border-strong); border-radius: var(--radius-sm);
+    background: var(--input-bg); color: var(--text); outline: none;
+  }
+  .tmpl-in:focus { border-color: var(--purple); box-shadow: 0 0 0 3px rgba(60,52,137,0.15); }
+  .del-btn {
+    background: transparent; border: none; cursor: pointer;
+    color: var(--text3); padding: 8px; border-radius: 8px;
+    display: flex; align-items: center; font-size: 20px;
+  }
+  .del-btn:active { color: var(--red); background: var(--red-light); }
+
+  /* ADD BUTTON */
+  .add-btn {
+    margin: 12px 16px;
+    background: transparent; border: 2px dashed var(--blue-border);
+    border-radius: var(--radius-sm); padding: 11px;
+    font-size: 14px; font-weight: 800; font-family: 'Nunito', sans-serif;
+    color: var(--blue-mid); cursor: pointer;
+    width: calc(100% - 32px);
+    display: flex; align-items: center; justify-content: center; gap: 6px;
+  }
+  .add-btn:active { background: var(--blue-light); }
+
+  /* SUMMARY GRID */
+  .smgrid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; padding: 14px; }
+  .metric { background: var(--input-bg); border-radius: var(--radius-sm); padding: 12px 14px; }
+  .metric-label {
+    font-size: 11px; font-weight: 800; color: var(--text2);
+    margin-bottom: 5px; font-family: 'Nunito', sans-serif;
+    text-transform: uppercase; letter-spacing: 0.05em;
+  }
+  .metric-val { font-size: 22px; font-weight: 800; font-family: 'Nunito', sans-serif; color: var(--text); }
+  .metric-net {
+    grid-column: span 2;
+    background: var(--blue-light); border: 2px solid var(--blue-border);
+    border-radius: var(--radius-sm); padding: 14px;
+  }
+  .metric-net .metric-label { color: var(--blue-mid); }
+  .metric-net .metric-val { font-size: 28px; }
+  .profit { color: var(--green) !important; }
+  .loss { color: var(--red) !important; }
+
+  /* SAVE BUTTON */
+  .save-btn {
+    width: 100%; padding: 15px;
+    background: var(--blue); color: white; border: none;
+    border-radius: var(--radius); font-size: 17px; font-weight: 800;
+    font-family: 'Nunito', sans-serif; cursor: pointer;
+    display: flex; align-items: center; justify-content: center; gap: 8px;
+    margin-top: 4px; box-shadow: 0 2px 8px rgba(12,68,124,0.25);
+  }
+  .save-btn i { font-size: 22px; }
+  .save-btn:active { transform: scale(0.98); background: var(--blue-mid); }
+  .save-btn.purple { background: var(--purple); box-shadow: 0 2px 8px rgba(60,52,137,0.25); }
+  .save-btn.purple:active { background: #534AB7; }
+
+  /* HINT */
+  .hint {
+    font-size: 13px; font-weight: 600; color: var(--text3);
+    padding: 10px 16px; border-top: 1px solid var(--border);
+    font-family: 'Nunito Sans', sans-serif; line-height: 1.5;
+  }
+  .hint:empty { display: none; }
+
+  /* TOAST */
+  .toast {
+    background: #085041; color: white;
+    padding: 12px 18px; border-radius: var(--radius);
+    font-size: 15px; font-weight: 700; font-family: 'Nunito', sans-serif;
+    display: flex; align-items: center; gap: 8px;
+    margin: 12px 0 0; opacity: 0; pointer-events: none;
+    transition: opacity 0.3s; box-shadow: 0 3px 10px rgba(8,80,65,0.3);
+  }
+  .toast.show { opacity: 1; }
+
+  /* MONTH NAV */
+  .month-nav {
+    display: flex; align-items: center; justify-content: space-between;
+    padding: 11px 14px;
+    background: var(--card); border: 1px solid var(--border);
+    border-radius: var(--radius); margin-bottom: 14px;
+    box-shadow: 0 1px 4px rgba(0,0,0,0.06);
+  }
+  .mnbtn {
+    background: transparent; border: 2px solid var(--border-strong);
+    border-radius: var(--radius-sm); padding: 8px 14px;
+    font-size: 13px; font-weight: 800; font-family: 'Nunito', sans-serif;
+    color: var(--text); cursor: pointer; display: flex; align-items: center; gap: 4px;
+  }
+  .mnbtn i { font-size: 16px; }
+  .mnbtn:active { background: var(--input-bg); }
+  .month-label { font-size: 16px; font-weight: 800; font-family: 'Nunito', sans-serif; color: var(--text); }
+
+  /* MONTHLY SUMMARY */
+  .msummary {
+    background: var(--card); border: 1px solid var(--border);
+    border-radius: var(--radius); margin-bottom: 14px; overflow: hidden;
+    box-shadow: 0 1px 4px rgba(0,0,0,0.06);
+  }
+  .msummary-hdr {
+    padding: 13px 16px; background: var(--blue); color: white;
+    font-size: 16px; font-weight: 800; font-family: 'Nunito', sans-serif;
+    display: flex; align-items: center; gap: 8px;
+  }
+  .msummary-hdr i { font-size: 20px; }
+  .mgrid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; padding: 14px; }
+  .mm { background: var(--input-bg); border-radius: var(--radius-sm); padding: 11px 13px; }
+  .mm-label {
+    font-size: 11px; font-weight: 800; color: var(--text2); margin-bottom: 4px;
+    font-family: 'Nunito', sans-serif; text-transform: uppercase; letter-spacing: 0.05em;
+    display: flex; align-items: center; gap: 5px;
+  }
+  .mm-label i { font-size: 13px; }
+  .mm-val { font-size: 18px; font-weight: 800; font-family: 'Nunito', sans-serif; color: var(--text); }
+  .mm-net { grid-column: span 2; background: var(--blue-light); border: 2px solid var(--blue-border); }
+  .mm-net .mm-label { color: var(--blue-mid); }
+  .mm-net .mm-val { font-size: 22px; }
+  .mm-profit { background: var(--green-light); }
+  .mm-profit .mm-label { color: var(--green); }
+  .mm-profit .mm-val { color: var(--green); }
+  .mm-loss { background: var(--red-light); }
+  .mm-loss .mm-label { color: var(--red); }
+  .mm-loss .mm-val { color: var(--red); }
+
+  /* P&L TABLE */
+  .tbl-wrap {
+    background: var(--card); border: 1px solid var(--border);
+    border-radius: var(--radius); margin-bottom: 14px; overflow: hidden;
+    box-shadow: 0 1px 4px rgba(0,0,0,0.06);
+  }
+  .tbl-hdr {
+    padding: 12px 16px; border-bottom: 1px solid var(--border);
+    font-size: 15px; font-weight: 800; font-family: 'Nunito', sans-serif;
+    color: var(--blue); display: flex; align-items: center; gap: 8px; background: var(--blue-light);
+  }
+  .tbl-hdr i { font-size: 18px; }
+  .tbl-hint { font-size: 11px; color: var(--blue-mid); font-weight: 600; margin-left: auto; }
+  .scroll-x { overflow-x: auto; -webkit-overflow-scrolling: touch; }
+  .pl-tbl { width: 100%; border-collapse: collapse; min-width: 380px; }
+  .pl-tbl th {
+    font-size: 12px; font-weight: 800; font-family: 'Nunito', sans-serif; color: var(--blue);
+    padding: 9px 12px; text-align: right;
+    border-bottom: 2px solid var(--blue-border); background: var(--blue-light); white-space: nowrap;
+  }
+  .pl-tbl th:first-child { text-align: left; position: sticky; left: 0; background: var(--blue-light); z-index: 2; }
+  .pl-tbl td {
+    font-size: 14px; font-weight: 700; font-family: 'Nunito', sans-serif;
+    padding: 11px 12px; text-align: right;
+    border-bottom: 1px solid var(--border); color: var(--text); white-space: nowrap;
+  }
+  .pl-tbl td:first-child {
+    text-align: left; position: sticky; left: 0;
+    background: var(--card); z-index: 1; font-size: 12px; font-weight: 700; color: var(--text2);
+  }
+  .pl-tbl tr.tr-total td {
+    font-weight: 900; font-size: 14px; background: var(--blue-light);
+    border-top: 2px solid var(--blue-border); color: var(--blue);
+  }
+  .pl-tbl tr.tr-total td:first-child { background: var(--blue-light); }
+  .pl-tbl tr:hover td { background: #f8fafc; }
+  .pl-tbl tr:hover td:first-child { background: #f8fafc; }
+  .pl-tbl tr.tr-total:hover td { background: var(--blue-light); }
+  .pl-tbl .sales-col { color: var(--blue); }
+  .pl-tbl .exp-col { color: var(--red); }
+
+  /* PILLS */
+  .pill {
+    display: inline-flex; align-items: center;
+    font-size: 13px; padding: 4px 9px; border-radius: 20px;
+    font-weight: 800; font-family: 'Nunito', sans-serif;
+  }
+  .pill-p { background: var(--green-light); color: var(--green); }
+  .pill-l { background: var(--red-light); color: var(--red); }
+
+  /* EXPORT BTN */
+  .export-btn {
+    width: 100%; padding: 12px;
+    background: transparent; border: 2px solid var(--border-strong);
+    border-radius: var(--radius); font-size: 14px; font-weight: 800;
+    font-family: 'Nunito', sans-serif; color: var(--text2);
+    cursor: pointer; display: flex; align-items: center; justify-content: center;
+    gap: 7px; margin-bottom: 10px;
+  }
+  .export-btn i { font-size: 18px; }
+  .export-btn:active { background: var(--input-bg); color: var(--text); }
+
+  /* EMPTY STATE */
+  .empty-state { text-align: center; padding: 44px 20px; color: var(--text3); }
+  .empty-state i { font-size: 44px; display: block; margin-bottom: 12px; opacity: 0.35; }
+  .empty-state .e-title { font-size: 16px; font-weight: 800; font-family: 'Nunito', sans-serif; color: var(--text2); }
+  .empty-state .e-sub { font-size: 13px; font-weight: 600; margin-top: 6px; }
+
+  /* INSTALL BANNER */
+  .install-banner {
+    background: #1D9E75; color: white;
+    padding: 12px 16px; font-size: 13px; font-weight: 700;
+    font-family: 'Nunito', sans-serif;
+    display: flex; align-items: center; gap: 10px; cursor: pointer;
+  }
+  .install-banner i { font-size: 20px; flex-shrink: 0; }
+  .install-banner .ib-close { margin-left: auto; font-size: 20px; opacity: 0.8; }
+  .install-banner.hidden { display: none; }
+</style>
+</head>
+<body>
+<div class="app">
+
+  <!-- INSTALL BANNER -->
+  <div class="install-banner hidden" id="installBanner" onclick="installApp()">
+    <i class="ti ti-download"></i>
+    <span>Add to Home Screen for app experience</span>
+    <i class="ti ti-x ib-close" onclick="dismissInstall(event)"></i>
+  </div>
+
+  <div class="header">
+    <div class="header-title"><i class="ti ti-book"></i> Restaurant Cash Book</div>
+    <div class="header-sub" id="headerDate"></div>
+  </div>
+
+  <div class="tabs">
+    <button class="tab active" id="tabEntry" onclick="showTab('entry')"><i class="ti ti-pencil"></i> Daily Entry</button>
+    <button class="tab" id="tabTemplates" onclick="showTab('templates')"><i class="ti ti-list-check"></i> Expenses</button>
+    <button class="tab" id="tabReports" onclick="showTab('reports')"><i class="ti ti-report-analytics"></i> Monthly P&L</button>
+  </div>
+
+  <!-- DAILY ENTRY VIEW -->
+  <div class="view active" id="entryView">
+
+    <div class="sc">
+      <div class="sh"><div class="sh-left"><i class="ti ti-calendar"></i> Entry Date</div></div>
+      <div class="date-row">
+        <input class="date-input" type="date" id="entryDate">
+        <button class="today-btn" onclick="setToday()">Today</button>
+      </div>
+    </div>
+
+    <div class="sc">
+      <div class="sh"><div class="sh-left"><i class="ti ti-cash"></i> Sales & Income</div></div>
+      <div class="irow">
+        <div class="ilabel"><i class="ti ti-wallet" style="color:#3B6D11"></i><span>Cash<br><span class="ilabel-sub">Counter cash sales</span></span></div>
+        <input class="amount-input" id="cashSales" type="number" min="0" placeholder="0" oninput="calc()">
+      </div>
+      <div class="irow">
+        <div class="ilabel"><i class="ti ti-device-mobile" style="color:#185FA5"></i><span>Online<br><span class="ilabel-sub">UPI / Card</span></span></div>
+        <input class="amount-input" id="onlineSales" type="number" min="0" placeholder="0" oninput="calc()">
+      </div>
+      <div class="irow">
+        <div class="ilabel"><i class="ti ti-bike" style="color:#993C1D"></i><span>Zomato / Swiggy<br><span class="ilabel-sub">Delivery apps</span></span></div>
+        <input class="amount-input" id="zomatoSales" type="number" min="0" placeholder="0" oninput="calc()">
+      </div>
+      <div class="irow">
+        <div class="ilabel"><i class="ti ti-user-dollar" style="color:#854F0B"></i><span>Credit (Udhaar)<br><span class="ilabel-sub">Pending collection</span></span></div>
+        <input class="amount-input" id="creditSales" type="number" min="0" placeholder="0" oninput="calc()">
+      </div>
+    </div>
+
+    <div class="sc">
+      <div class="sh"><div class="sh-left"><i class="ti ti-receipt"></i> Expenses</div><span class="sh-right">fixed from setup</span></div>
+      <div id="expEntryList"></div>
+      <div class="hint" id="expHint"></div>
+    </div>
+
+    <div class="sc">
+      <div class="sh"><div class="sh-left"><i class="ti ti-calculator"></i> Today's Summary</div></div>
+      <div class="smgrid">
+        <div class="metric"><div class="metric-label">Total Sales</div><div class="metric-val" id="totalSales">₹0</div></div>
+        <div class="metric"><div class="metric-label">Total Expenses</div><div class="metric-val" id="totalExp">₹0</div></div>
+        <div class="metric-net metric">
+          <div class="metric-label">Net Profit / Loss</div>
+          <div class="metric-val" id="netProfit">₹0</div>
+        </div>
+      </div>
+    </div>
+
+    <button class="save-btn" onclick="saveReport()"><i class="ti ti-device-floppy"></i> Save Report for This Date</button>
+    <div class="toast" id="toast"><i class="ti ti-check"></i> <span id="toastMsg">Saved!</span></div>
+  </div>
+
+  <!-- EXPENSE SETUP VIEW -->
+  <div class="view" id="templatesView">
+    <div class="sc">
+      <div class="sh"><div class="sh-left"><i class="ti ti-list-check" style="color:#534AB7"></i> Fixed Expense Names</div></div>
+      <div id="tmplList"></div>
+      <button class="add-btn" onclick="addTemplate()"><i class="ti ti-plus"></i> Add Expense Name</button>
+      <div class="hint">Add your expense names once here — Vegetables, Gas, Staff Salary, Electricity, etc. They will auto-appear in Daily Entry every day. You only fill in the amount each day.</div>
+    </div>
+    <button class="save-btn purple" onclick="saveTemplates()"><i class="ti ti-device-floppy"></i> Save Expense Setup</button>
+    <div class="toast" id="toastTmpl" style="background:#3C3489;margin-top:12px"><i class="ti ti-check"></i> Expense names saved!</div>
+  </div>
+
+  <!-- MONTHLY P&L VIEW -->
+  <div class="view" id="reportsView">
+    <div class="month-nav">
+      <button class="mnbtn" onclick="changeMonth(-1)"><i class="ti ti-chevron-left"></i> Prev</button>
+      <span class="month-label" id="monthLabel"></span>
+      <button class="mnbtn" onclick="changeMonth(1)">Next <i class="ti ti-chevron-right"></i></button>
+    </div>
+    <div id="monthlySummary"></div>
+    <div id="plTable"></div>
+    <button class="export-btn" onclick="exportCSV()"><i class="ti ti-download"></i> Export This Month to CSV</button>
+  </div>
+
+</div>
+
+<script>
+  let reports = [], templates = [], expAmounts = [];
+  let viewYear = new Date().getFullYear(), viewMonth = new Date().getMonth();
+  const SK = 'rcb_reports', TK = 'rcb_templates';
+
+  // Storage helpers using localStorage
+  function loadData() {
+    try { const r = localStorage.getItem(SK); if (r) reports = JSON.parse(r); } catch(e) { reports = []; }
+    try { const t = localStorage.getItem(TK); if (t) templates = JSON.parse(t); } catch(e) { templates = []; }
+    expAmounts = templates.map(() => '');
+    renderExpEntry(); renderTemplates();
+    const d = new Date();
+    document.getElementById('headerDate').textContent = d.toLocaleDateString('en-IN', { weekday:'long', day:'numeric', month:'long', year:'numeric' });
+  }
+  function persist() { try { localStorage.setItem(SK, JSON.stringify(reports)); } catch(e) {} }
+  function persistTmpl() { try { localStorage.setItem(TK, JSON.stringify(templates)); } catch(e) {} }
+
+  function fmt(n) { return '₹' + Math.round(n).toLocaleString('en-IN'); }
+  function gv(id) { return Math.max(0, parseFloat(document.getElementById(id).value) || 0); }
+  function todayISO() { const d = new Date(); return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`; }
+  function setToday() { document.getElementById('entryDate').value = todayISO(); loadDateData(); }
+  function dayLabel(ds) { const d = new Date(ds + 'T00:00:00'); return d.toLocaleDateString('en-IN', { day:'numeric', month:'short', weekday:'short' }); }
+
+  function renderExpEntry() {
+    const el = document.getElementById('expEntryList');
+    const hint = document.getElementById('expHint');
+    if (!templates.length) {
+      el.innerHTML = '';
+      hint.textContent = 'No expenses set up yet. Go to "Expenses" tab to add your fixed expense names.';
+      return;
+    }
+    hint.textContent = '';
+    el.innerHTML = templates.map((t, i) => `
+      <div class="exp-entry-row">
+        <div class="exp-name-tag"><i class="ti ti-circle-dot"></i>${t}</div>
+        <input class="amount-input" style="width:120px" type="number" min="0" placeholder="0" value="${expAmounts[i] || ''}" oninput="expAmounts[${i}]=this.value;calc()">
+      </div>`).join('');
+  }
+
+  function renderTemplates() {
+    const el = document.getElementById('tmplList');
+    if (!templates.length) {
+      el.innerHTML = `<div style="padding:14px 16px;font-size:14px;font-weight:600;color:#8a94a6">No expense names added yet.</div>`;
+      return;
+    }
+    el.innerHTML = templates.map((t, i) => `
+      <div class="tmpl-row">
+        <input class="tmpl-in" placeholder="e.g. Vegetables, Gas, Staff Salary" value="${t}" oninput="templates[${i}]=this.value">
+        <button class="del-btn" onclick="delTemplate(${i})" aria-label="Remove"><i class="ti ti-trash"></i></button>
+      </div>`).join('');
+  }
+
+  function addTemplate() { templates.push(''); expAmounts.push(''); renderTemplates(); }
+  function delTemplate(i) { templates.splice(i, 1); expAmounts.splice(i, 1); renderTemplates(); }
+
+  async function saveTemplates() {
+    templates = templates.filter(t => t.trim());
+    expAmounts = templates.map(() => '');
+    persistTmpl(); renderTemplates(); renderExpEntry();
+    const t = document.getElementById('toastTmpl');
+    t.classList.add('show'); setTimeout(() => t.classList.remove('show'), 2500);
+  }
+
+  function calc() {
+    const ts = gv('cashSales') + gv('onlineSales') + gv('zomatoSales') + gv('creditSales');
+    const te = expAmounts.reduce((s, a) => s + Math.max(0, parseFloat(a) || 0), 0);
+    const np = ts - te;
+    document.getElementById('totalSales').textContent = fmt(ts);
+    document.getElementById('totalExp').textContent = fmt(te);
+    const el = document.getElementById('netProfit');
+    el.textContent = fmt(np);
+    el.className = 'metric-val' + (np > 0 ? ' profit' : np < 0 ? ' loss' : '');
+  }
+
+  function loadDateData() {
+    const key = document.getElementById('entryDate').value;
+    if (!key) return;
+    const ex = reports.find(r => r.date === key);
+    if (ex) {
+      document.getElementById('cashSales').value = ex.cash || '';
+      document.getElementById('onlineSales').value = ex.online || '';
+      document.getElementById('zomatoSales').value = ex.zomato || '';
+      document.getElementById('creditSales').value = ex.credit || '';
+      expAmounts = templates.map(t => { const e = ex.expenses.find(x => x.name === t); return e ? e.amount : ''; });
+    } else {
+      ['cashSales','onlineSales','zomatoSales','creditSales'].forEach(id => document.getElementById(id).value = '');
+      expAmounts = templates.map(() => '');
+    }
+    renderExpEntry(); calc();
+  }
+
+  function saveReport() {
+    const key = document.getElementById('entryDate').value;
+    if (!key) { showToast('Please select a date first'); return; }
+    const c = gv('cashSales'), o = gv('onlineSales'), z = gv('zomatoSales'), cr = gv('creditSales');
+    const ts = c + o + z + cr;
+    const exps = templates.map((t, i) => ({ name: t, amount: Math.max(0, parseFloat(expAmounts[i]) || 0) }));
+    const te = exps.reduce((s, e) => s + e.amount, 0);
+    const net = ts - te;
+    const idx = reports.findIndex(r => r.date === key);
+    const entry = { date: key, cash: c, online: o, zomato: z, credit: cr, totalSales: ts, expenses: exps, totalExp: te, net };
+    if (idx >= 0) reports[idx] = entry; else reports.push(entry);
+    reports.sort((a, b) => b.date.localeCompare(a.date));
+    persist();
+    showToast(idx >= 0 ? 'Updated — ' + dayLabel(key) : 'Saved — ' + dayLabel(key));
+  }
+
+  function showToast(msg) {
+    const t = document.getElementById('toast');
+    document.getElementById('toastMsg').textContent = msg;
+    t.classList.add('show'); setTimeout(() => t.classList.remove('show'), 2800);
+  }
+
+  function showTab(tab) {
+    ['entry','templates','reports'].forEach(v => {
+      document.getElementById(v + 'View').className = 'view' + (v === tab ? ' active' : '');
+      const id = 'tab' + v.charAt(0).toUpperCase() + v.slice(1);
+      document.getElementById(id).className = 'tab' + (v === tab ? ' active' : '');
+    });
+    if (tab === 'reports') renderReports();
+  }
+
+  function changeMonth(dir) {
+    viewMonth += dir;
+    if (viewMonth > 11) { viewMonth = 0; viewYear++; }
+    if (viewMonth < 0) { viewMonth = 11; viewYear--; }
+    renderReports();
+  }
+
+  function renderReports() {
+    const mr = reports.filter(r => { const d = new Date(r.date + 'T00:00:00'); return d.getMonth() === viewMonth && d.getFullYear() === viewYear; });
+    const mn = new Date(viewYear, viewMonth, 1).toLocaleDateString('en-IN', { month:'long', year:'numeric' });
+    document.getElementById('monthLabel').textContent = mn;
+    const mS = mr.reduce((s, r) => s + r.totalSales, 0);
+    const mE = mr.reduce((s, r) => s + r.totalExp, 0);
+    const mN = mS - mE;
+    const mC = mr.reduce((s, r) => s + r.cash, 0);
+    const mO = mr.reduce((s, r) => s + r.online, 0);
+    const mZ = mr.reduce((s, r) => s + r.zomato, 0);
+    const mCr = mr.reduce((s, r) => s + r.credit, 0);
+    const pDays = mr.filter(r => r.net > 0).length;
+    const lDays = mr.filter(r => r.net < 0).length;
+
+    document.getElementById('monthlySummary').innerHTML = `
+      <div class="msummary">
+        <div class="msummary-hdr"><i class="ti ti-calendar-stats"></i> ${mn} — Summary</div>
+        <div class="mgrid">
+          <div class="mm"><div class="mm-label">Total Sales</div><div class="mm-val">${fmt(mS)}</div></div>
+          <div class="mm"><div class="mm-label">Total Expenses</div><div class="mm-val">${fmt(mE)}</div></div>
+          <div class="mm mm-net"><div class="mm-label">Net Profit / Loss</div><div class="mm-val ${mN>=0?'profit':'loss'}">${fmt(mN)}</div></div>
+          <div class="mm"><div class="mm-label"><i class="ti ti-wallet"></i> Cash</div><div class="mm-val">${fmt(mC)}</div></div>
+          <div class="mm"><div class="mm-label"><i class="ti ti-device-mobile"></i> Online</div><div class="mm-val">${fmt(mO)}</div></div>
+          <div class="mm"><div class="mm-label"><i class="ti ti-bike"></i> Delivery</div><div class="mm-val">${fmt(mZ)}</div></div>
+          <div class="mm"><div class="mm-label"><i class="ti ti-user-dollar"></i> Credit</div><div class="mm-val">${fmt(mCr)}</div></div>
+          <div class="mm mm-profit"><div class="mm-label"><i class="ti ti-trending-up"></i> Profit Days</div><div class="mm-val">${pDays} days</div></div>
+          <div class="mm mm-loss"><div class="mm-label"><i class="ti ti-trending-down"></i> Loss Days</div><div class="mm-val">${lDays} days</div></div>
+        </div>
+      </div>`;
+
+    if (!mr.length) {
+      document.getElementById('plTable').innerHTML = `<div class="empty-state"><i class="ti ti-notebook"></i><div class="e-title">No entries for ${mn}</div><div class="e-sub">Fill and save daily entries to see the P&L table here</div></div>`;
+      return;
+    }
+
+    const allExpNames = [...new Set(mr.flatMap(r => r.expenses.map(e => e.name)))];
+    const hCols = `<th>Date</th><th>Sales</th>${allExpNames.map(n => `<th title="${n}">${n.length > 9 ? n.slice(0,8)+'…' : n}</th>`).join('')}<th>Exp Total</th><th>Net P&L</th>`;
+    const dRows = mr.map(r => {
+      const pill = r.net >= 0 ? `<span class="pill pill-p">${fmt(r.net)}</span>` : `<span class="pill pill-l">${fmt(r.net)}</span>`;
+      const eCols = allExpNames.map(n => { const e = r.expenses.find(x => x.name === n); return `<td class="exp-col">${e && e.amount ? fmt(e.amount) : '—'}</td>`; }).join('');
+      return `<tr><td><div style="font-weight:800;color:#1a1a2e;font-size:13px;font-family:'Nunito',sans-serif">${dayLabel(r.date)}</div></td><td class="sales-col">${fmt(r.totalSales)}</td>${eCols}<td class="exp-col">${fmt(r.totalExp)}</td><td>${pill}</td></tr>`;
+    }).join('');
+    const tECols = allExpNames.map(n => { const tot = mr.reduce((s, r) => { const e = r.expenses.find(x => x.name === n); return s + (e ? e.amount : 0); }, 0); return `<td>${fmt(tot)}</td>`; }).join('');
+    const tRow = `<tr class="tr-total"><td>${mr.length} days</td><td>${fmt(mS)}</td>${tECols}<td>${fmt(mE)}</td><td class="${mN>=0?'profit':'loss'}">${fmt(mN)}</td></tr>`;
+
+    document.getElementById('plTable').innerHTML = `
+      <div class="tbl-wrap">
+        <div class="tbl-hdr"><i class="ti ti-table"></i> Day-wise P&L <span class="tbl-hint">← swipe →</span></div>
+        <div class="scroll-x">
+          <table class="pl-tbl">
+            <thead><tr>${hCols}</tr></thead>
+            <tbody>${dRows}${tRow}</tbody>
+          </table>
+        </div>
+      </div>`;
+  }
+
+  function exportCSV() {
+    const mr = reports.filter(r => { const d = new Date(r.date + 'T00:00:00'); return d.getMonth() === viewMonth && d.getFullYear() === viewYear; });
+    if (!mr.length) return;
+    const allExpNames = [...new Set(mr.flatMap(r => r.expenses.map(e => e.name)))];
+    const header = ['Date','Cash','Online','Zomato/Swiggy','Credit','Total Sales', ...allExpNames, 'Total Expenses','Net P&L'];
+    const rows = mr.map(r => {
+      const ev = allExpNames.map(n => { const e = r.expenses.find(x => x.name === n); return e ? e.amount : 0; });
+      return [r.date, r.cash, r.online, r.zomato, r.credit, r.totalSales, ...ev, r.totalExp, r.net];
+    });
+    const mS = mr.reduce((s,r) => s+r.totalSales, 0), mE = mr.reduce((s,r) => s+r.totalExp, 0);
+    const tEV = allExpNames.map(n => mr.reduce((s,r) => { const e = r.expenses.find(x=>x.name===n); return s+(e?e.amount:0); }, 0));
+    rows.push(['TOTAL','','','','', mS, ...tEV, mE, mS-mE]);
+    const csv = [header, ...rows].map(r => r.join(',')).join('\n');
+    const a = document.createElement('a');
+    a.href = URL.createObjectURL(new Blob([csv], {type:'text/csv'}));
+    const mn = new Date(viewYear, viewMonth, 1).toLocaleDateString('en-IN', {month:'long',year:'numeric'}).replace(' ','-');
+    a.download = `cashbook-${mn}.csv`; a.click();
+  }
+
+  // PWA Install prompt
+  let deferredPrompt = null;
+  window.addEventListener('beforeinstallprompt', e => {
+    e.preventDefault(); deferredPrompt = e;
+    document.getElementById('installBanner').classList.remove('hidden');
+  });
+  function installApp() {
+    if (deferredPrompt) { deferredPrompt.prompt(); deferredPrompt.userChoice.then(() => { deferredPrompt = null; dismissInstall(); }); }
+  }
+  function dismissInstall(ev) {
+    if (ev) ev.stopPropagation();
+    document.getElementById('installBanner').classList.add('hidden');
+  }
+
+  // Init
+  document.getElementById('entryDate').value = todayISO();
+  document.getElementById('entryDate').addEventListener('change', loadDateData);
+  loadData();
+</script>
+</body>
+</html>
