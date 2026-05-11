@@ -12,6 +12,9 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Nunito:wght@600;700;800;900&family=Nunito+Sans:wght@400;600;700&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@latest/tabler-icons.min.css">
+<!-- Firebase SDKs -->
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-database-compat.js"></script>
 <style>
   :root {
     --bg: #f4f6f9;
@@ -359,7 +362,64 @@
   .empty-state .e-title { font-size: 16px; font-weight: 800; font-family: 'Nunito', sans-serif; color: var(--text2); }
   .empty-state .e-sub { font-size: 13px; font-weight: 600; margin-top: 6px; }
 
-  /* INSTALL BANNER */
+  /* SYNC STATUS */
+  .sync-bar {
+    display: flex; align-items: center; gap: 7px;
+    padding: 7px 14px; font-size: 12px; font-weight: 700;
+    font-family: 'Nunito', sans-serif;
+    background: #E6F1FB; border-bottom: 1px solid var(--blue-border);
+    color: var(--blue-mid); transition: background 0.3s, color 0.3s;
+  }
+  .sync-bar.syncing { background: #FFF8E1; color: #9A6700; border-color: #FFE082; }
+  .sync-bar.error { background: var(--red-light); color: var(--red); border-color: #F5C6C6; }
+  .sync-bar.connected { background: var(--green-light); color: var(--green); border-color: #B2DDD3; }
+  .sync-dot {
+    width: 8px; height: 8px; border-radius: 50%;
+    background: currentColor; flex-shrink: 0;
+    animation: pulse-dot 1.5s infinite;
+  }
+  .sync-bar:not(.syncing) .sync-dot { animation: none; }
+  @keyframes pulse-dot { 0%,100%{opacity:1} 50%{opacity:0.3} }
+
+  /* CONFIG MODAL */
+  .modal-overlay {
+    position: fixed; inset: 0; background: rgba(0,0,0,0.55);
+    z-index: 200; display: flex; align-items: center; justify-content: center;
+    padding: 20px;
+  }
+  .modal-overlay.hidden { display: none; }
+  .modal {
+    background: var(--card); border-radius: var(--radius);
+    width: 100%; max-width: 440px; overflow: hidden;
+    box-shadow: 0 8px 32px rgba(0,0,0,0.22);
+  }
+  .modal-hdr {
+    background: var(--blue); color: white; padding: 16px 18px;
+    font-family: 'Nunito', sans-serif; font-size: 18px; font-weight: 800;
+    display: flex; align-items: center; gap: 10px;
+  }
+  .modal-body { padding: 18px; }
+  .modal-body p { font-size: 14px; color: var(--text2); line-height: 1.6; margin-bottom: 14px; }
+  .modal-body label { font-size: 13px; font-weight: 700; color: var(--text); font-family: 'Nunito', sans-serif; display: block; margin-bottom: 5px; }
+  .modal-input {
+    width: 100%; padding: 11px 12px; margin-bottom: 12px;
+    font-size: 14px; font-family: 'Nunito Sans', sans-serif;
+    border: 2px solid var(--border-strong); border-radius: var(--radius-sm);
+    background: var(--input-bg); color: var(--text); outline: none;
+  }
+  .modal-input:focus { border-color: var(--blue-mid); }
+  .modal-footer { display: flex; gap: 10px; padding: 0 18px 18px; }
+  .modal-btn {
+    flex: 1; padding: 12px; border: none; border-radius: var(--radius-sm);
+    font-size: 15px; font-weight: 800; font-family: 'Nunito', sans-serif; cursor: pointer;
+  }
+  .modal-btn.primary { background: var(--blue); color: white; }
+  .modal-btn.secondary { background: var(--input-bg); color: var(--text2); border: 2px solid var(--border-strong); }
+  .modal-steps { counter-reset: step; margin-bottom: 14px; }
+  .modal-step { display: flex; gap: 10px; margin-bottom: 10px; font-size: 13px; color: var(--text2); line-height: 1.5; }
+  .modal-step::before { counter-increment: step; content: counter(step); background: var(--blue); color: white; width: 22px; height: 22px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 12px; font-weight: 800; font-family: 'Nunito', sans-serif; flex-shrink: 0; margin-top: 1px; }
+  .step-link { color: var(--blue-mid); font-weight: 700; word-break: break-all; }
+
   .install-banner {
     background: #1D9E75; color: white;
     padding: 12px 16px; font-size: 13px; font-weight: 700;
@@ -373,6 +433,37 @@
 </head>
 <body>
 <div class="app">
+
+  <!-- FIREBASE CONFIG MODAL -->
+  <div class="modal-overlay" id="configModal">
+    <div class="modal">
+      <div class="modal-hdr"><i class="ti ti-cloud"></i> Set Up Real-Time Sync</div>
+      <div class="modal-body">
+        <p>To enable live sync, you need a free Firebase project. Follow these steps once:</p>
+        <div class="modal-steps">
+          <div class="modal-step">Go to <a class="step-link" href="https://console.firebase.google.com" target="_blank">console.firebase.google.com</a> → Create a project (disable Analytics is fine).</div>
+          <div class="modal-step">In your project: <b>Build → Realtime Database → Create Database</b> → choose any region → start in <b>test mode</b>.</div>
+          <div class="modal-step">Go to <b>Project Settings ⚙ → General</b>, scroll to "Your apps" → click <b>&lt;/&gt; Web</b> → register app → copy the <b>databaseURL</b> (looks like <i>https://your-project-default-rtdb.firebaseio.com</i>).</div>
+          <div class="modal-step">Paste the Database URL below and click Connect. Share this same HTML file with everyone — they just open it and it syncs!</div>
+        </div>
+        <label>Firebase Database URL</label>
+        <input class="modal-input" id="fbUrlInput" type="url" placeholder="https://your-project-default-rtdb.firebaseio.com">
+        <label>Room / Restaurant ID <span style="font-weight:600;color:var(--text3)">(any unique name, same for all users)</span></label>
+        <input class="modal-input" id="fbRoomInput" type="text" placeholder="my-restaurant" value="restaurant-cashbook">
+      </div>
+      <div class="modal-footer">
+        <button class="modal-btn secondary" onclick="skipSync()">Use Offline Only</button>
+        <button class="modal-btn primary" onclick="connectFirebase()"><i class="ti ti-plug"></i> Connect & Sync</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- SYNC STATUS BAR -->
+  <div class="sync-bar hidden" id="syncBar">
+    <span class="sync-dot"></span>
+    <span id="syncMsg">Connecting…</span>
+    <button onclick="openSyncConfig()" style="margin-left:auto;background:none;border:none;cursor:pointer;font-size:18px;color:currentColor" title="Sync settings"><i class="ti ti-settings"></i></button>
+  </div>
 
   <!-- INSTALL BANNER -->
   <div class="install-banner hidden" id="installBanner" onclick="installApp()">
@@ -475,18 +566,124 @@
   let reports = [], templates = [], expAmounts = [];
   let viewYear = new Date().getFullYear(), viewMonth = new Date().getMonth();
   const SK = 'rcb_reports', TK = 'rcb_templates';
+  const FB_CFG_KEY = 'rcb_firebase_cfg';
 
-  // Storage helpers using localStorage
-  function loadData() {
+  // ── Firebase state ──────────────────────────────────────────────
+  let db = null, fbRoom = null, _suppressRemoteUpdate = false;
+
+  function setSyncBar(state, msg) {
+    const bar = document.getElementById('syncBar');
+    bar.className = 'sync-bar ' + state;
+    bar.classList.remove('hidden');
+    document.getElementById('syncMsg').textContent = msg;
+  }
+
+  function openSyncConfig() { document.getElementById('configModal').classList.remove('hidden'); }
+  function skipSync() {
+    document.getElementById('configModal').classList.add('hidden');
+    document.getElementById('syncBar').classList.add('hidden');
+    loadLocalData();
+  }
+
+  function connectFirebase() {
+    const url  = document.getElementById('fbUrlInput').value.trim()  || HARDCODED_FB_URL;
+    const room = document.getElementById('fbRoomInput').value.trim() || HARDCODED_FB_ROOM;
+    if (!url || !url.startsWith('https://')) { alert('Please enter a valid Firebase Database URL (starts with https://)'); return; }
+    localStorage.setItem(FB_CFG_KEY, JSON.stringify({ url, room }));
+    document.getElementById('configModal').classList.add('hidden');
+    initFirebase(url, room);
+  }
+
+  function initFirebase(url, room) {
+    try {
+      // Re-use existing app or init
+      let app;
+      try { app = firebase.app(); } catch(e) { app = firebase.initializeApp({ databaseURL: url }); }
+      db = firebase.database(app);
+      fbRoom = room;
+      setSyncBar('syncing', 'Connecting to live sync…');
+
+      // Listen for reports
+      db.ref(`${fbRoom}/reports`).on('value', snap => {
+        if (_suppressRemoteUpdate) return;
+        const val = snap.val();
+        reports = val ? Object.values(val) : [];
+        reports.sort((a, b) => b.date.localeCompare(a.date));
+        // Persist locally as cache
+        try { localStorage.setItem(SK, JSON.stringify(reports)); } catch(e) {}
+        renderExpEntry(); calc();
+        if (document.getElementById('reportsView').classList.contains('active')) renderReports();
+        setSyncBar('connected', `Live — synced (room: ${fbRoom})`);
+      }, err => {
+        setSyncBar('error', 'Sync error: ' + err.message);
+      });
+
+      // Listen for templates
+      db.ref(`${fbRoom}/templates`).on('value', snap => {
+        if (_suppressRemoteUpdate) return;
+        const val = snap.val();
+        const newTmpl = val || [];
+        // Preserve expAmounts alignment
+        expAmounts = newTmpl.map((t, i) => templates[i] === t ? (expAmounts[i] || '') : '');
+        templates = newTmpl;
+        try { localStorage.setItem(TK, JSON.stringify(templates)); } catch(e) {}
+        renderTemplates(); renderExpEntry(); calc();
+      });
+
+      // Connection state indicator
+      db.ref('.info/connected').on('value', snap => {
+        if (snap.val() === true) setSyncBar('connected', `Live — connected (room: ${fbRoom})`);
+        else setSyncBar('syncing', 'Reconnecting…');
+      });
+
+    } catch(e) {
+      setSyncBar('error', 'Firebase error: ' + e.message);
+    }
+  }
+
+  // ── Storage helpers ──────────────────────────────────────────────
+  function loadLocalData() {
     try { const r = localStorage.getItem(SK); if (r) reports = JSON.parse(r); } catch(e) { reports = []; }
     try { const t = localStorage.getItem(TK); if (t) templates = JSON.parse(t); } catch(e) { templates = []; }
     expAmounts = templates.map(() => '');
     renderExpEntry(); renderTemplates();
+  }
+
+  const HARDCODED_FB_URL  = 'https://dnh-cash-book-default-rtdb.asia-southeast1.firebasedatabase.app';
+  const HARDCODED_FB_ROOM = 'restaurant-cashbook';
+
+  function loadData() {
+    loadLocalData();
     const d = new Date();
     document.getElementById('headerDate').textContent = d.toLocaleDateString('en-IN', { weekday:'long', day:'numeric', month:'long', year:'numeric' });
+    // Auto-connect with hardcoded URL — no setup needed
+    document.getElementById('fbUrlInput').value  = HARDCODED_FB_URL;
+    document.getElementById('fbRoomInput').value = HARDCODED_FB_ROOM;
+    initFirebase(HARDCODED_FB_URL, HARDCODED_FB_ROOM);
   }
-  function persist() { try { localStorage.setItem(SK, JSON.stringify(reports)); } catch(e) {} }
-  function persistTmpl() { try { localStorage.setItem(TK, JSON.stringify(templates)); } catch(e) {} }
+
+  // Push reports to Firebase; fall back to localStorage
+  function persist() {
+    try { localStorage.setItem(SK, JSON.stringify(reports)); } catch(e) {}
+    if (!db || !fbRoom) return;
+    _suppressRemoteUpdate = true;
+    const obj = {};
+    reports.forEach(r => { obj[r.date] = r; });
+    db.ref(`${fbRoom}/reports`).set(obj)
+      .then(() => { setSyncBar('connected', `Saved & synced (room: ${fbRoom})`); })
+      .catch(err => setSyncBar('error', 'Save failed: ' + err.message))
+      .finally(() => { setTimeout(() => { _suppressRemoteUpdate = false; }, 500); });
+  }
+
+  // Push templates to Firebase
+  function persistTmpl() {
+    try { localStorage.setItem(TK, JSON.stringify(templates)); } catch(e) {}
+    if (!db || !fbRoom) return;
+    _suppressRemoteUpdate = true;
+    db.ref(`${fbRoom}/templates`).set(templates)
+      .catch(err => setSyncBar('error', 'Save failed: ' + err.message))
+      .finally(() => { setTimeout(() => { _suppressRemoteUpdate = false; }, 500); });
+  }
 
   function fmt(n) { return '₹' + Math.round(n).toLocaleString('en-IN'); }
   function gv(id) { return Math.max(0, parseFloat(document.getElementById(id).value) || 0); }
