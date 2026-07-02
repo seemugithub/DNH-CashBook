@@ -15,6 +15,8 @@
 <!-- Firebase SDKs -->
 <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-database-compat.js"></script>
+<!-- Tesseract.js for bill photo text recognition (English + Hindi) -->
+<script src="https://cdn.jsdelivr.net/npm/tesseract.js@5/dist/tesseract.min.js"></script>
 <style>
   :root {
     --bg: #f4f6f9;
@@ -429,6 +431,95 @@
   .install-banner i { font-size: 20px; flex-shrink: 0; }
   .install-banner .ib-close { margin-left: auto; font-size: 20px; opacity: 0.8; }
   .install-banner.hidden { display: none; }
+
+  /* RAW MATERIAL: SUB-TABS */
+  .subtabs {
+    display: flex; gap: 6px; padding: 12px 12px 0;
+  }
+  .subtab {
+    flex: 1; padding: 9px 4px; text-align: center;
+    font-size: 12px; font-weight: 800; font-family: 'Nunito', sans-serif;
+    border: 2px solid var(--border-strong); border-radius: 10px;
+    background: var(--card); color: var(--text2); cursor: pointer;
+  }
+  .subtab.active { background: var(--blue); border-color: var(--blue); color: #fff; }
+  .subview { display: none; padding: 12px 0 0; }
+  .subview.active { display: block; }
+
+  /* SELECT INPUT */
+  .sel-input {
+    flex: 1; padding: 10px 12px; font-size: 15px; font-weight: 700; font-family: 'Nunito', sans-serif;
+    border: 2px solid var(--border-strong); border-radius: var(--radius-sm);
+    background: var(--input-bg); color: var(--text); outline: none;
+  }
+  .sel-input:focus { border-color: var(--blue-mid); }
+  .field-row { padding: 12px 16px; border-bottom: 1px solid var(--border); }
+  .field-row:last-child { border-bottom: none; }
+  .field-row label { display: block; font-size: 12px; font-weight: 800; color: var(--text2); font-family: 'Nunito', sans-serif; margin-bottom: 6px; text-transform: uppercase; letter-spacing: 0.03em; }
+  .field-2col { display: flex; gap: 10px; }
+  .field-2col > * { flex: 1; }
+  .txt-input {
+    width: 100%; padding: 10px 12px; font-size: 15px; font-weight: 700; font-family: 'Nunito', sans-serif;
+    border: 2px solid var(--border-strong); border-radius: var(--radius-sm);
+    background: var(--input-bg); color: var(--text); outline: none;
+  }
+  .txt-input:focus { border-color: var(--blue-mid); }
+
+  /* ITEM CHIP LIST (raw material item setup) */
+  .item-row { display: flex; gap: 8px; align-items: center; padding: 10px 16px; border-bottom: 1px solid var(--border); flex-wrap: wrap; }
+  .item-row:last-of-type { border-bottom: none; }
+  .item-row .tmpl-in { flex: 2; min-width: 100px; }
+  .unit-sel { flex: 0.7; min-width: 62px; padding: 10px 6px; font-size: 14px; font-weight: 700; font-family: 'Nunito', sans-serif; border: 2px solid var(--border-strong); border-radius: var(--radius-sm); background: var(--input-bg); color: var(--text); }
+  .price-in { flex: 1; min-width: 88px; padding: 10px 10px; font-size: 14px; font-weight: 700; font-family: 'Nunito', sans-serif; border: 2px solid var(--border-strong); border-radius: var(--radius-sm); background: var(--input-bg); color: var(--text); text-align: right; }
+  .price-in:focus, .unit-sel:focus, .item-row .tmpl-in:focus { border-color: var(--blue-mid); outline: none; }
+  .item-row-hdr { display: flex; gap: 8px; padding: 8px 16px 0; }
+  .item-row-hdr span { font-size: 10px; font-weight: 800; color: var(--text3); text-transform: uppercase; letter-spacing: 0.03em; }
+  .item-row-hdr span:nth-child(1) { flex: 2; min-width: 100px; }
+  .item-row-hdr span:nth-child(2) { flex: 0.7; min-width: 62px; }
+  .item-row-hdr span:nth-child(3) { flex: 1; min-width: 88px; text-align: right; }
+  .item-row-hdr span:nth-child(4) { width: 36px; }
+  .rate-readonly { background: var(--blue-light) !important; color: var(--blue-mid); }
+  .stock-value { font-size: 11px; color: var(--text3); font-weight: 700; text-align: right; margin-top: 2px; }
+
+  /* BILL PHOTO */
+  .bill-photo-box {
+    margin: 12px 16px; border: 2px dashed var(--blue-border); border-radius: var(--radius-sm);
+    padding: 14px; text-align: center; background: var(--blue-light);
+  }
+  .bill-photo-box img { max-width: 100%; max-height: 220px; border-radius: 8px; margin-top: 10px; display: block; margin-left: auto; margin-right: auto; }
+  .bill-btn-row { display: flex; gap: 8px; justify-content: center; flex-wrap: wrap; }
+  .bill-btn {
+    padding: 9px 14px; font-size: 13px; font-weight: 800; font-family: 'Nunito', sans-serif;
+    border: 2px solid var(--blue-mid); border-radius: var(--radius-sm); background: #fff; color: var(--blue-mid);
+    cursor: pointer; display: inline-flex; align-items: center; gap: 6px;
+  }
+  .bill-btn:active { background: var(--blue-light); }
+  .bill-btn.scanning { opacity: 0.6; pointer-events: none; }
+  .ocr-text {
+    margin: 10px 16px 0; padding: 10px 12px; background: var(--input-bg);
+    border: 2px solid var(--border-strong); border-radius: var(--radius-sm);
+    font-size: 12px; color: var(--text2); font-family: 'Nunito Sans', sans-serif;
+    max-height: 140px; overflow-y: auto; white-space: pre-wrap; line-height: 1.5;
+  }
+  .ocr-note { margin: 8px 16px 0; font-size: 11.5px; color: var(--text3); line-height: 1.5; }
+
+  /* LIST ROWS (purchase / consumption history) */
+  .hist-row { padding: 11px 16px; border-bottom: 1px solid var(--border); display: flex; align-items: center; gap: 10px; }
+  .hist-row:last-child { border-bottom: none; }
+  .hist-main { flex: 1; min-width: 0; }
+  .hist-title { font-size: 14px; font-weight: 800; font-family: 'Nunito', sans-serif; color: var(--text); }
+  .hist-sub { font-size: 11.5px; color: var(--text3); font-weight: 600; margin-top: 2px; }
+  .hist-amt { font-size: 15px; font-weight: 800; font-family: 'Nunito', sans-serif; color: var(--blue); white-space: nowrap; }
+  .hist-del { background: transparent; border: none; color: var(--text3); font-size: 18px; cursor: pointer; padding: 6px; }
+  .hist-del:active { color: var(--red); }
+
+  /* STOCK CARDS */
+  .stock-card { padding: 13px 16px; border-bottom: 1px solid var(--border); display: flex; align-items: center; gap: 12px; }
+  .stock-card:last-child { border-bottom: none; }
+  .stock-name { flex: 1; font-size: 15px; font-weight: 800; font-family: 'Nunito', sans-serif; color: var(--text); }
+  .stock-qty { font-size: 17px; font-weight: 900; font-family: 'Nunito', sans-serif; }
+  .stock-qty.low { color: var(--red); }
+  .stock-qty.ok { color: var(--green); }
 </style>
 </head>
 <body>
@@ -480,6 +571,7 @@
   <div class="tabs">
     <button class="tab active" id="tabEntry" onclick="showTab('entry')"><i class="ti ti-pencil"></i> Daily Entry</button>
     <button class="tab" id="tabTemplates" onclick="showTab('templates')"><i class="ti ti-list-check"></i> Expenses</button>
+    <button class="tab" id="tabRaw" onclick="showTab('raw')"><i class="ti ti-meat"></i> Raw Material</button>
     <button class="tab" id="tabReports" onclick="showTab('reports')"><i class="ti ti-report-analytics"></i> Monthly P&L</button>
   </div>
 
@@ -548,6 +640,111 @@
     <div class="toast" id="toastTmpl" style="background:#3C3489;margin-top:12px"><i class="ti ti-check"></i> Expense names saved!</div>
   </div>
 
+  <!-- RAW MATERIAL VIEW -->
+  <div class="view" id="rawView">
+    <div class="subtabs">
+      <button class="subtab active" id="rsubItems" onclick="showRawSub('items')">Items</button>
+      <button class="subtab" id="rsubPurchase" onclick="showRawSub('purchase')">Purchase</button>
+      <button class="subtab" id="rsubConsume" onclick="showRawSub('consume')">Consumed</button>
+      <button class="subtab" id="rsubStock" onclick="showRawSub('stock')">Stock</button>
+    </div>
+
+    <!-- ITEMS SETUP -->
+    <div class="subview active" id="rawItemsSub">
+      <div class="sc">
+        <div class="sh"><div class="sh-left"><i class="ti ti-meat" style="color:#993C1D"></i> Raw Material Items</div></div>
+        <div class="item-row-hdr"><span>Item name</span><span>Unit</span><span>Price ₹/unit</span><span></span></div>
+        <div id="rawItemList"></div>
+        <button class="add-btn" onclick="addRawItem()"><i class="ti ti-plus"></i> Add Item</button>
+        <div class="hint">Add each raw material once — e.g. Chicken, Mutton, Fish, Paneer — with its unit (kg/g/pcs/l) and price per unit. Set the price only here, one time. It auto-fills every time you log a purchase, so you only type in the quantity. Edits save automatically.</div>
+      </div>
+    </div>
+
+    <!-- PURCHASE ENTRY -->
+    <div class="subview" id="rawPurchaseSub">
+      <div class="sc">
+        <div class="sh"><div class="sh-left"><i class="ti ti-receipt-2" style="color:#0F6E56"></i> Raw Meat Purchase (Bill)</div></div>
+        <div class="field-row">
+          <label>Date</label>
+          <input class="txt-input" type="date" id="rpDate">
+        </div>
+        <div class="field-row">
+          <label>Item</label>
+          <select class="sel-input" id="rpItem" onchange="rpItemChange()" style="width:100%"></select>
+        </div>
+        <div class="field-row field-2col">
+          <div><label>Quantity</label><input class="txt-input" type="number" min="0" id="rpQty" placeholder="0" oninput="rpCalc()"></div>
+          <div><label>Rate (₹/unit)</label><input class="txt-input rate-readonly" type="number" min="0" id="rpRate" placeholder="0" readonly oninput="rpCalc()"></div>
+        </div>
+        <div class="field-row">
+          <label>Total Amount (₹) — auto calculated</label>
+          <input class="txt-input rate-readonly" type="number" min="0" id="rpAmount" placeholder="0" readonly>
+        </div>
+        <div class="hint" style="padding:0 16px 4px">Rate is pulled from the price you set for this item in the "Items" tab, and the amount is calculated automatically. Change the price anytime in "Items" if it goes up or down.</div>
+        <div class="field-row">
+          <label>Supplier / Shop Name (optional)</label>
+          <input class="txt-input" type="text" id="rpSupplier" placeholder="e.g. Ramesh Meat Shop">
+        </div>
+        <div class="field-row">
+          <label>Note (optional)</label>
+          <input class="txt-input" type="text" id="rpNote" placeholder="Any remarks">
+        </div>
+        <div class="bill-photo-box">
+          <div class="bill-btn-row">
+            <button class="bill-btn" onclick="document.getElementById('rpBillInput').click()"><i class="ti ti-camera"></i> Take / Upload Bill Photo</button>
+            <button class="bill-btn" id="rpScanBtn" onclick="scanBill('purchase')" style="display:none"><i class="ti ti-scan"></i> Read Bill Text</button>
+          </div>
+          <input type="file" id="rpBillInput" accept="image/*" capture="environment" style="display:none" onchange="onBillSelected(this,'purchase')">
+          <img id="rpBillImg" style="display:none">
+          <div class="ocr-text" id="rpOcrText" style="display:none"></div>
+          <div class="ocr-note">Works with printed Hindi or English bills — handwriting may not read well. Please double-check quantity, rate and amount after scanning; the numbers above won't fill in automatically.</div>
+        </div>
+        <button class="save-btn" style="margin:14px 16px 4px;width:calc(100% - 32px)" onclick="saveRawPurchase()"><i class="ti ti-device-floppy"></i> Save Purchase Entry</button>
+      </div>
+      <div class="sc">
+        <div class="sh"><div class="sh-left"><i class="ti ti-history"></i> Recent Purchases</div></div>
+        <div id="rawPurchaseHist"></div>
+      </div>
+    </div>
+
+    <!-- CONSUMPTION ENTRY -->
+    <div class="subview" id="rawConsumeSub">
+      <div class="sc">
+        <div class="sh"><div class="sh-left"><i class="ti ti-chef-hat" style="color:#A32D2D"></i> Raw Material Consumed</div></div>
+        <div class="field-row">
+          <label>Date</label>
+          <input class="txt-input" type="date" id="rcDate">
+        </div>
+        <div class="field-row">
+          <label>Item</label>
+          <select class="sel-input" id="rcItem" style="width:100%"></select>
+        </div>
+        <div class="field-row">
+          <label>Quantity Consumed</label>
+          <input class="txt-input" type="number" min="0" id="rcQty" placeholder="0">
+        </div>
+        <div class="field-row">
+          <label>Note (optional)</label>
+          <input class="txt-input" type="text" id="rcNote" placeholder="e.g. used for dinner service">
+        </div>
+        <button class="save-btn" style="margin:14px 16px 4px;width:calc(100% - 32px);background:var(--red)" onclick="saveRawConsumption()"><i class="ti ti-device-floppy"></i> Save Consumption Entry</button>
+      </div>
+      <div class="sc">
+        <div class="sh"><div class="sh-left"><i class="ti ti-history"></i> Recent Consumption</div></div>
+        <div id="rawConsumeHist"></div>
+      </div>
+    </div>
+
+    <!-- STOCK -->
+    <div class="subview" id="rawStockSub">
+      <div class="sc">
+        <div class="sh"><div class="sh-left"><i class="ti ti-box" style="color:#3C3489"></i> Current Stock (Purchased − Consumed)</div></div>
+        <div id="rawStockList"></div>
+      </div>
+      <div class="hint" style="padding:0 2px 6px">Stock is calculated as total purchased minus total consumed since you started using this section — it isn't tied to a specific date. Use the Reports tab for month-wise purchase & consumption totals.</div>
+    </div>
+  </div>
+
   <!-- MONTHLY P&L VIEW -->
   <div class="view" id="reportsView">
     <div class="month-nav">
@@ -558,15 +755,21 @@
     <div id="monthlySummary"></div>
     <div id="plTable"></div>
     <button class="export-btn" onclick="exportCSV()"><i class="ti ti-download"></i> Export This Month to CSV</button>
+    <div id="rawMonthlyReport"></div>
+    <button class="export-btn" onclick="exportRawCSV()"><i class="ti ti-download"></i> Export Raw Material to CSV</button>
   </div>
 
 </div>
 
 <script>
   let reports = [], templates = [], expAmounts = [];
+  let rawItems = [], rawPurchases = [], rawConsumption = [];
   let viewYear = new Date().getFullYear(), viewMonth = new Date().getMonth();
   const SK = 'rcb_reports', TK = 'rcb_templates';
+  const RIK = 'rcb_rawitems', RPK = 'rcb_rawpurchases', RCK = 'rcb_rawconsumption';
   const FB_CFG_KEY = 'rcb_firebase_cfg';
+  const UNITS = ['kg','g','l','ml','pcs'];
+  let rpBillDataUrl = null;
 
   // ── Firebase state ──────────────────────────────────────────────
   let db = null, fbRoom = null, _suppressRemoteUpdate = false;
@@ -630,6 +833,36 @@
         renderTemplates(); renderExpEntry(); calc();
       });
 
+      // Listen for raw material items
+      db.ref(`${fbRoom}/rawItems`).on('value', snap => {
+        if (_suppressRemoteUpdate) return;
+        rawItems = snap.val() || [];
+        try { localStorage.setItem(RIK, JSON.stringify(rawItems)); } catch(e) {}
+        renderRawItems(); renderRawItemSelects(); renderRawStock();
+      });
+
+      // Listen for raw material purchases
+      db.ref(`${fbRoom}/rawPurchases`).on('value', snap => {
+        if (_suppressRemoteUpdate) return;
+        const val = snap.val();
+        rawPurchases = val ? Object.values(val) : [];
+        rawPurchases.sort((a, b) => b.date.localeCompare(a.date));
+        try { localStorage.setItem(RPK, JSON.stringify(rawPurchases)); } catch(e) {}
+        renderRawPurchaseHist(); renderRawStock();
+        if (document.getElementById('reportsView').classList.contains('active')) renderRawMonthlyReport();
+      });
+
+      // Listen for raw material consumption
+      db.ref(`${fbRoom}/rawConsumption`).on('value', snap => {
+        if (_suppressRemoteUpdate) return;
+        const val = snap.val();
+        rawConsumption = val ? Object.values(val) : [];
+        rawConsumption.sort((a, b) => b.date.localeCompare(a.date));
+        try { localStorage.setItem(RCK, JSON.stringify(rawConsumption)); } catch(e) {}
+        renderRawConsumeHist(); renderRawStock();
+        if (document.getElementById('reportsView').classList.contains('active')) renderRawMonthlyReport();
+      });
+
       // Connection state indicator
       db.ref('.info/connected').on('value', snap => {
         if (snap.val() === true) setSyncBar('connected', `Live — connected (room: ${fbRoom})`);
@@ -645,8 +878,12 @@
   function loadLocalData() {
     try { const r = localStorage.getItem(SK); if (r) reports = JSON.parse(r); } catch(e) { reports = []; }
     try { const t = localStorage.getItem(TK); if (t) templates = JSON.parse(t); } catch(e) { templates = []; }
+    try { const ri = localStorage.getItem(RIK); if (ri) rawItems = JSON.parse(ri); } catch(e) { rawItems = []; }
+    try { const rp = localStorage.getItem(RPK); if (rp) rawPurchases = JSON.parse(rp); } catch(e) { rawPurchases = []; }
+    try { const rc = localStorage.getItem(RCK); if (rc) rawConsumption = JSON.parse(rc); } catch(e) { rawConsumption = []; }
     expAmounts = templates.map(() => '');
     renderExpEntry(); renderTemplates();
+    renderRawItems(); renderRawItemSelects(); renderRawPurchaseHist(); renderRawConsumeHist(); renderRawStock();
   }
 
   const HARDCODED_FB_URL  = 'https://dnh-cash-book-default-rtdb.asia-southeast1.firebasedatabase.app';
@@ -681,6 +918,40 @@
     if (!db || !fbRoom) return;
     _suppressRemoteUpdate = true;
     db.ref(`${fbRoom}/templates`).set(templates)
+      .catch(err => setSyncBar('error', 'Save failed: ' + err.message))
+      .finally(() => { setTimeout(() => { _suppressRemoteUpdate = false; }, 500); });
+  }
+
+  // Push raw material items to Firebase
+  function persistRawItems() {
+    try { localStorage.setItem(RIK, JSON.stringify(rawItems)); } catch(e) {}
+    if (!db || !fbRoom) return;
+    _suppressRemoteUpdate = true;
+    db.ref(`${fbRoom}/rawItems`).set(rawItems)
+      .catch(err => setSyncBar('error', 'Save failed: ' + err.message))
+      .finally(() => { setTimeout(() => { _suppressRemoteUpdate = false; }, 500); });
+  }
+
+  // Push raw material purchases to Firebase
+  function persistRawPurchases() {
+    try { localStorage.setItem(RPK, JSON.stringify(rawPurchases)); } catch(e) {}
+    if (!db || !fbRoom) return;
+    _suppressRemoteUpdate = true;
+    const obj = {};
+    rawPurchases.forEach(p => { obj[p.id] = p; });
+    db.ref(`${fbRoom}/rawPurchases`).set(obj)
+      .catch(err => setSyncBar('error', 'Save failed: ' + err.message))
+      .finally(() => { setTimeout(() => { _suppressRemoteUpdate = false; }, 500); });
+  }
+
+  // Push raw material consumption to Firebase
+  function persistRawConsumption() {
+    try { localStorage.setItem(RCK, JSON.stringify(rawConsumption)); } catch(e) {}
+    if (!db || !fbRoom) return;
+    _suppressRemoteUpdate = true;
+    const obj = {};
+    rawConsumption.forEach(c => { obj[c.id] = c; });
+    db.ref(`${fbRoom}/rawConsumption`).set(obj)
       .catch(err => setSyncBar('error', 'Save failed: ' + err.message))
       .finally(() => { setTimeout(() => { _suppressRemoteUpdate = false; }, 500); });
   }
@@ -782,12 +1053,21 @@
   }
 
   function showTab(tab) {
-    ['entry','templates','reports'].forEach(v => {
+    ['entry','templates','raw','reports'].forEach(v => {
       document.getElementById(v + 'View').className = 'view' + (v === tab ? ' active' : '');
       const id = 'tab' + v.charAt(0).toUpperCase() + v.slice(1);
       document.getElementById(id).className = 'tab' + (v === tab ? ' active' : '');
     });
-    if (tab === 'reports') renderReports();
+    if (tab === 'reports') { renderReports(); renderRawMonthlyReport(); }
+    if (tab === 'raw') { renderRawItemSelects(); renderRawStock(); }
+  }
+
+  function showRawSub(sub) {
+    ['items','purchase','consume','stock'].forEach(v => {
+      document.getElementById('raw' + v.charAt(0).toUpperCase() + v.slice(1) + 'Sub').className = 'subview' + (v === sub ? ' active' : '');
+      document.getElementById('rsub' + v.charAt(0).toUpperCase() + v.slice(1)).className = 'subtab' + (v === sub ? ' active' : '');
+    });
+    if (sub === 'stock') renderRawStock();
   }
 
   function changeMonth(dir) {
@@ -873,6 +1153,285 @@
     a.download = `cashbook-${mn}.csv`; a.click();
   }
 
+  // ── RAW MATERIAL: Items setup ──────────────────────────────────
+  function renderRawItems() {
+    const el = document.getElementById('rawItemList');
+    if (!rawItems.length) {
+      el.innerHTML = `<div style="padding:14px 16px;font-size:14px;font-weight:600;color:#8a94a6">No raw material items added yet.</div>`;
+      return;
+    }
+    el.innerHTML = rawItems.map((it, i) => `
+      <div class="item-row">
+        <input class="tmpl-in" placeholder="e.g. Chicken, Mutton, Fish" value="${it.name}" oninput="rawItems[${i}].name=this.value;persistRawItems();renderRawItemSelects()">
+        <select class="unit-sel" onchange="rawItems[${i}].unit=this.value;persistRawItems()">
+          ${UNITS.map(u => `<option value="${u}" ${it.unit===u?'selected':''}>${u}</option>`).join('')}
+        </select>
+        <input class="price-in" type="number" min="0" placeholder="0" value="${it.price || ''}" oninput="rawItems[${i}].price=parseFloat(this.value)||0;persistRawItems();rpItemChange()">
+        <button class="del-btn" onclick="delRawItem(${i})" aria-label="Remove"><i class="ti ti-trash"></i></button>
+      </div>`).join('');
+  }
+  function addRawItem() { rawItems.push({ name: '', unit: 'kg', price: 0 }); persistRawItems(); renderRawItems(); renderRawItemSelects(); }
+  function delRawItem(i) { rawItems.splice(i, 1); persistRawItems(); renderRawItems(); renderRawItemSelects(); }
+
+  function renderRawItemSelects() {
+    const opts = rawItems.filter(it => it.name.trim()).map(it => `<option value="${it.name}">${it.name} (${it.unit})</option>`).join('');
+    const placeholder = rawItems.filter(it=>it.name.trim()).length ? opts : `<option value="">Add items in "Items" tab first</option>`;
+    ['rpItem','rcItem'].forEach(id => {
+      const sel = document.getElementById(id);
+      const cur = sel.value;
+      sel.innerHTML = placeholder;
+      if ([...sel.options].some(o => o.value === cur)) sel.value = cur;
+    });
+    rpItemChange();
+  }
+
+  function rawItemUnit(name) { const it = rawItems.find(x => x.name === name); return it ? it.unit : ''; }
+  function rawItemPrice(name) { const it = rawItems.find(x => x.name === name); return it ? (it.price || 0) : 0; }
+
+  // ── RAW MATERIAL: Purchase entry ───────────────────────────────
+  // Rate auto-fills from the item's fixed price (set once in the Items tab) whenever the item changes.
+  function rpItemChange() {
+    const item = document.getElementById('rpItem').value;
+    document.getElementById('rpRate').value = item ? rawItemPrice(item) : '';
+    rpCalc();
+  }
+  function rpCalc() {
+    const q = parseFloat(document.getElementById('rpQty').value) || 0;
+    const r = parseFloat(document.getElementById('rpRate').value) || 0;
+    document.getElementById('rpAmount').value = (q && r) ? (q * r).toFixed(2).replace(/\.00$/,'') : '';
+  }
+
+  function onBillSelected(input, kind) {
+    const file = input.files[0];
+    if (!file) return;
+    const reader = new FileReader();
+    reader.onload = e => {
+      rpBillDataUrl = e.target.result;
+      const img = document.getElementById('rpBillImg');
+      img.src = rpBillDataUrl; img.style.display = 'block';
+      document.getElementById('rpScanBtn').style.display = 'inline-flex';
+      document.getElementById('rpOcrText').style.display = 'none';
+    };
+    reader.readAsDataURL(file);
+  }
+
+  async function scanBill(kind) {
+    if (!rpBillDataUrl || typeof Tesseract === 'undefined') return;
+    const btn = document.getElementById('rpScanBtn');
+    const box = document.getElementById('rpOcrText');
+    btn.classList.add('scanning'); btn.innerHTML = '<i class="ti ti-loader-2"></i> Reading…';
+    box.style.display = 'block'; box.textContent = 'Reading bill text, this can take a few seconds…';
+    try {
+      const { data } = await Tesseract.recognize(rpBillDataUrl, 'eng+hin');
+      box.textContent = (data.text || '').trim() || 'No readable text found on this photo.';
+    } catch (e) {
+      box.textContent = 'Could not read this photo (' + e.message + '). You can still enter the details manually.';
+    }
+    btn.classList.remove('scanning'); btn.innerHTML = '<i class="ti ti-scan"></i> Read Bill Text';
+  }
+
+  function saveRawPurchase() {
+    const date = document.getElementById('rpDate').value;
+    const item = document.getElementById('rpItem').value;
+    const qty = parseFloat(document.getElementById('rpQty').value) || 0;
+    const rate = parseFloat(document.getElementById('rpRate').value) || 0;
+    const amount = parseFloat(document.getElementById('rpAmount').value) || (qty * rate);
+    const supplier = document.getElementById('rpSupplier').value.trim();
+    const note = document.getElementById('rpNote').value.trim();
+    if (!date) { showToast('Please select a date'); return; }
+    if (!item) { showToast('Please select an item'); return; }
+    if (!qty) { showToast('Please enter quantity'); return; }
+    const entry = { id: 'rp_' + Date.now() + '_' + Math.random().toString(36).slice(2,7), date, item, unit: rawItemUnit(item), qty, rate, amount, supplier, note, billImg: rpBillDataUrl || null };
+    rawPurchases.unshift(entry);
+    rawPurchases.sort((a,b) => b.date.localeCompare(a.date));
+    persistRawPurchases();
+    renderRawPurchaseHist(); renderRawStock();
+    ['rpQty','rpSupplier','rpNote'].forEach(id => document.getElementById(id).value = '');
+    rpItemChange();
+    rpBillDataUrl = null;
+    document.getElementById('rpBillImg').style.display = 'none';
+    document.getElementById('rpScanBtn').style.display = 'none';
+    document.getElementById('rpOcrText').style.display = 'none';
+    document.getElementById('rpBillInput').value = '';
+    showToast('Purchase entry saved');
+  }
+
+  function renderRawPurchaseHist() {
+    const el = document.getElementById('rawPurchaseHist');
+    if (!rawPurchases.length) { el.innerHTML = `<div class="empty-state"><i class="ti ti-receipt-2"></i><div class="e-title">No purchases yet</div><div class="e-sub">Saved purchase entries will show here</div></div>`; return; }
+    el.innerHTML = rawPurchases.slice(0, 30).map(p => `
+      <div class="hist-row">
+        <div class="hist-main">
+          <div class="hist-title">${p.item} — ${p.qty}${p.unit}</div>
+          <div class="hist-sub">${dayLabel(p.date)}${p.supplier ? ' · ' + p.supplier : ''}${p.billImg ? ' · <i class="ti ti-photo"></i> bill attached' : ''}</div>
+        </div>
+        <div class="hist-amt">${fmt(p.amount)}</div>
+        <button class="hist-del" onclick="delRawPurchase('${p.id}')"><i class="ti ti-trash"></i></button>
+      </div>`).join('');
+  }
+  function delRawPurchase(id) { rawPurchases = rawPurchases.filter(p => p.id !== id); persistRawPurchases(); renderRawPurchaseHist(); renderRawStock(); }
+
+  // ── RAW MATERIAL: Consumption entry ────────────────────────────
+  function saveRawConsumption() {
+    const date = document.getElementById('rcDate').value;
+    const item = document.getElementById('rcItem').value;
+    const qty = parseFloat(document.getElementById('rcQty').value) || 0;
+    const note = document.getElementById('rcNote').value.trim();
+    if (!date) { showToast('Please select a date'); return; }
+    if (!item) { showToast('Please select an item'); return; }
+    if (!qty) { showToast('Please enter quantity consumed'); return; }
+    const entry = { id: 'rc_' + Date.now() + '_' + Math.random().toString(36).slice(2,7), date, item, unit: rawItemUnit(item), qty, note };
+    rawConsumption.unshift(entry);
+    rawConsumption.sort((a,b) => b.date.localeCompare(a.date));
+    persistRawConsumption();
+    renderRawConsumeHist(); renderRawStock();
+    ['rcQty','rcNote'].forEach(id => document.getElementById(id).value = '');
+    showToast('Consumption entry saved');
+  }
+
+  function renderRawConsumeHist() {
+    const el = document.getElementById('rawConsumeHist');
+    if (!rawConsumption.length) { el.innerHTML = `<div class="empty-state"><i class="ti ti-chef-hat"></i><div class="e-title">No consumption entries yet</div><div class="e-sub">Saved entries will show here</div></div>`; return; }
+    el.innerHTML = rawConsumption.slice(0, 30).map(c => `
+      <div class="hist-row">
+        <div class="hist-main">
+          <div class="hist-title">${c.item} — ${c.qty}${c.unit}</div>
+          <div class="hist-sub">${dayLabel(c.date)}${c.note ? ' · ' + c.note : ''}</div>
+        </div>
+        <button class="hist-del" onclick="delRawConsumption('${c.id}')"><i class="ti ti-trash"></i></button>
+      </div>`).join('');
+  }
+  function delRawConsumption(id) { rawConsumption = rawConsumption.filter(c => c.id !== id); persistRawConsumption(); renderRawConsumeHist(); renderRawStock(); }
+
+  // ── RAW MATERIAL: Stock ────────────────────────────────────────
+  function renderRawStock() {
+    const el = document.getElementById('rawStockList');
+    if (!el) return;
+    const named = rawItems.filter(it => it.name.trim());
+    if (!named.length) { el.innerHTML = `<div class="empty-state"><i class="ti ti-box"></i><div class="e-title">No items set up</div><div class="e-sub">Add raw material items in the "Items" tab</div></div>`; return; }
+    el.innerHTML = named.map(it => {
+      const purchased = rawPurchases.filter(p => p.item === it.name).reduce((s,p) => s + p.qty, 0);
+      const consumed = rawConsumption.filter(c => c.item === it.name).reduce((s,c) => s + c.qty, 0);
+      const stock = purchased - consumed;
+      const value = stock * (it.price || 0);
+      return `<div class="stock-card">
+        <div class="stock-name">${it.name}</div>
+        <div>
+          <div class="stock-qty ${stock < 0 ? 'low' : 'ok'}">${stock.toLocaleString('en-IN')} ${it.unit}</div>
+          ${it.price ? `<div class="stock-value">≈ ${fmt(value)}</div>` : ''}
+        </div>
+      </div>`;
+    }).join('');
+  }
+
+  // ── RAW MATERIAL: Monthly report ───────────────────────────────
+  function renderRawMonthlyReport() {
+    const el = document.getElementById('rawMonthlyReport');
+    if (!el) return;
+    const inMonth = d => { const dt = new Date(d + 'T00:00:00'); return dt.getMonth() === viewMonth && dt.getFullYear() === viewYear; };
+    const mp = rawPurchases.filter(p => inMonth(p.date));
+    const mc = rawConsumption.filter(c => inMonth(c.date));
+    const mn = new Date(viewYear, viewMonth, 1).toLocaleDateString('en-IN', { month:'long', year:'numeric' });
+    if (!mp.length && !mc.length && !rawItems.some(it => it.name.trim())) {
+      el.innerHTML = `<div class="tbl-wrap"><div class="tbl-hdr"><i class="ti ti-meat"></i> Raw Material — ${mn}</div><div class="empty-state"><i class="ti ti-meat"></i><div class="e-title">No raw material entries for ${mn}</div><div class="e-sub">Add purchase or consumption entries in the Raw Material tab</div></div></div>`;
+      return;
+    }
+    const itemNames = [...new Set([...mp.map(p=>p.item), ...mc.map(c=>c.item)])];
+    const totalPurchaseAmt = mp.reduce((s,p) => s + p.amount, 0);
+    const rows = itemNames.map(name => {
+      const pQty = mp.filter(p=>p.item===name).reduce((s,p)=>s+p.qty,0);
+      const pAmt = mp.filter(p=>p.item===name).reduce((s,p)=>s+p.amount,0);
+      const cQty = mc.filter(c=>c.item===name).reduce((s,c)=>s+c.qty,0);
+      const unit = rawItemUnit(name) || (mp.find(p=>p.item===name)||mc.find(c=>c.item===name)).unit || '';
+      return `<tr><td style="text-align:left">${name}</td><td>${pQty}${unit}</td><td>${fmt(pAmt)}</td><td>${cQty}${unit}</td></tr>`;
+    }).join('');
+
+    // Current stock (all-time purchased − consumed, not restricted to the viewed month)
+    const namedItems = rawItems.filter(it => it.name.trim());
+    const totalStockValue = namedItems.reduce((s, it) => {
+      const purchased = rawPurchases.filter(p => p.item === it.name).reduce((s,p) => s + p.qty, 0);
+      const consumed = rawConsumption.filter(c => c.item === it.name).reduce((s,c) => s + c.qty, 0);
+      return s + ((purchased - consumed) * (it.price || 0));
+    }, 0);
+    const stockRows = namedItems.map(it => {
+      const purchased = rawPurchases.filter(p => p.item === it.name).reduce((s,p) => s + p.qty, 0);
+      const consumed = rawConsumption.filter(c => c.item === it.name).reduce((s,c) => s + c.qty, 0);
+      const stock = purchased - consumed;
+      const value = stock * (it.price || 0);
+      return `<tr><td style="text-align:left">${it.name}</td><td style="${stock<0?'color:var(--red)':''}">${stock.toLocaleString('en-IN')}${it.unit}</td><td>${it.price ? fmt(it.price) : '—'}</td><td>${it.price ? fmt(value) : '—'}</td></tr>`;
+    }).join('');
+    const stockTbl = namedItems.length ? `
+      <div class="tbl-wrap" style="margin-top:12px">
+        <div class="tbl-hdr"><i class="ti ti-box"></i> Current Stock (as of today)</div>
+        <div class="mgrid" style="padding:14px">
+          <div class="mm"><div class="mm-label">Total Stock Value</div><div class="mm-val">${fmt(totalStockValue)}</div></div>
+          <div class="mm"><div class="mm-label">Items Tracked</div><div class="mm-val">${namedItems.length}</div></div>
+        </div>
+        <div class="scroll-x">
+          <table class="pl-tbl">
+            <thead><tr><th style="text-align:left">Item</th><th>Stock</th><th>Price ₹/unit</th><th>Value ₹</th></tr></thead>
+            <tbody>${stockRows}</tbody>
+          </table>
+        </div>
+      </div>` : '';
+
+    el.innerHTML = `
+      <div class="tbl-wrap">
+        <div class="tbl-hdr"><i class="ti ti-meat"></i> Raw Material — ${mn}</div>
+        <div class="mgrid" style="padding:14px">
+          <div class="mm"><div class="mm-label">Total Purchase</div><div class="mm-val">${fmt(totalPurchaseAmt)}</div></div>
+          <div class="mm"><div class="mm-label">Purchase Entries</div><div class="mm-val">${mp.length}</div></div>
+        </div>
+        ${rows ? `<div class="scroll-x">
+          <table class="pl-tbl">
+            <thead><tr><th style="text-align:left">Item</th><th>Purchased</th><th>Purchase ₹</th><th>Consumed</th></tr></thead>
+            <tbody>${rows}</tbody>
+          </table>
+        </div>` : `<div class="hint" style="padding:0 14px 14px">No purchase or consumption entries for ${mn}.</div>`}
+      </div>
+      ${stockTbl}`;
+  }
+
+  function exportRawCSV() {
+    const inMonth = d => { const dt = new Date(d + 'T00:00:00'); return dt.getMonth() === viewMonth && dt.getFullYear() === viewYear; };
+    const mp = rawPurchases.filter(p => inMonth(p.date));
+    const mc = rawConsumption.filter(c => inMonth(c.date));
+    const namedItems = rawItems.filter(it => it.name.trim());
+    if (!mp.length && !mc.length && !namedItems.length) return;
+
+    const allTx = [
+      ...rawPurchases.map(p => ({ type:'Purchase', date:p.date, item:p.item, qty:p.qty, unit:p.unit, rate:p.rate||'', supplier:p.supplier||'' })),
+      ...rawConsumption.map(c => ({ type:'Consumed', date:c.date, item:c.item, qty:c.qty, unit:c.unit, rate:'', supplier:c.note||'' }))
+    ].sort((a,b) => a.date.localeCompare(b.date));
+
+    const runningStock = {};
+    allTx.forEach(tx => {
+      const cur = runningStock[tx.item] || 0;
+      runningStock[tx.item] = tx.type === 'Purchase' ? cur + tx.qty : cur - tx.qty;
+      tx.stockAfter = runningStock[tx.item];
+    });
+
+    const rows = [['Date','Item','Purchased','Consumed','Stock','Price','Unit','Supplier']];
+    allTx.filter(tx => inMonth(tx.date)).forEach(tx => {
+      rows.push([tx.date, tx.item, tx.type === 'Purchase' ? tx.qty : '', tx.type === 'Consumed' ? tx.qty : '', tx.stockAfter, tx.rate, tx.unit, tx.supplier]);
+    });
+
+    rows.push([]);
+    rows.push(['Current Stock (as of today)']);
+    rows.push(['Date','Item','Purchased','Consumed','Stock','Price','Unit','Supplier']);
+    namedItems.forEach(it => {
+      const purchased = rawPurchases.filter(p => p.item === it.name).reduce((s,p) => s + p.qty, 0);
+      const consumed = rawConsumption.filter(c => c.item === it.name).reduce((s,c) => s + c.qty, 0);
+      const stock = purchased - consumed;
+      rows.push(['', it.name, '', '', stock, it.price||'', it.unit, '']);
+    });
+    const csv = rows.map(r => r.join(',')).join('\n');
+    const a = document.createElement('a');
+    a.href = URL.createObjectURL(new Blob([csv], {type:'text/csv'}));
+    const mn = new Date(viewYear, viewMonth, 1).toLocaleDateString('en-IN', {month:'long',year:'numeric'}).replace(' ','-');
+    a.download = `raw-material-${mn}.csv`; a.click();
+  }
+
   // PWA Install prompt
   let deferredPrompt = null;
   window.addEventListener('beforeinstallprompt', e => {
@@ -890,6 +1449,8 @@
   // Init
   document.getElementById('entryDate').value = todayISO();
   document.getElementById('entryDate').addEventListener('change', loadDateData);
+  document.getElementById('rpDate').value = todayISO();
+  document.getElementById('rcDate').value = todayISO();
   loadData();
 </script>
 </body>
