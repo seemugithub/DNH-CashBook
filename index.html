@@ -573,6 +573,7 @@
     <button class="tab" id="tabTemplates" onclick="showTab('templates')"><i class="ti ti-list-check"></i> Expenses</button>
     <button class="tab" id="tabRaw" onclick="showTab('raw')"><i class="ti ti-meat"></i> Raw Material</button>
     <button class="tab" id="tabReports" onclick="showTab('reports')"><i class="ti ti-report-analytics"></i> Monthly P&L</button>
+    <button class="tab" id="tabDashboard" onclick="showTab('dashboard')"><i class="ti ti-dashboard"></i> Dashboard</button>
   </div>
 
   <!-- DAILY ENTRY VIEW -->
@@ -757,6 +758,45 @@
     <button class="export-btn" onclick="exportCSV()"><i class="ti ti-download"></i> Export This Month to CSV</button>
     <div id="rawMonthlyReport"></div>
     <button class="export-btn" onclick="exportRawCSV()"><i class="ti ti-download"></i> Export Raw Material to CSV</button>
+  </div>
+
+  <!-- DASHBOARD VIEW -->
+  <div class="view" id="dashboardView">
+    <div class="subtabs">
+      <button class="subtab active" id="dsubSingle" onclick="showDashSub('single')">Single Date</button>
+      <button class="subtab" id="dsubCompare" onclick="showDashSub('compare')">Compare Dates</button>
+    </div>
+
+    <!-- SINGLE DATE VIEW -->
+    <div class="subview active" id="dashSingleSub">
+      <div class="sc">
+        <div class="sh"><div class="sh-left"><i class="ti ti-calendar"></i> Select Date</div></div>
+        <div class="date-row">
+          <input class="date-input" type="date" id="dashDate">
+          <button class="today-btn" onclick="setDashToday()">Today</button>
+        </div>
+        <div class="hint" id="dashDayLabel" style="font-weight:800;color:var(--blue-mid)"></div>
+      </div>
+      <div id="dashSingleContent"></div>
+    </div>
+
+    <!-- COMPARE VIEW -->
+    <div class="subview" id="dashCompareSub">
+      <div class="sc">
+        <div class="sh"><div class="sh-left"><i class="ti ti-arrows-left-right"></i> Compare Two Dates</div></div>
+        <div class="field-row">
+          <label>Date A</label>
+          <input class="txt-input" type="date" id="dashDateA">
+          <div class="hint" id="dashDayA" style="padding:6px 0 0;font-weight:800;color:var(--blue-mid)"></div>
+        </div>
+        <div class="field-row">
+          <label>Date B</label>
+          <input class="txt-input" type="date" id="dashDateB">
+          <div class="hint" id="dashDayB" style="padding:6px 0 0;font-weight:800;color:var(--blue-mid)"></div>
+        </div>
+      </div>
+      <div id="dashCompareContent"></div>
+    </div>
   </div>
 
 </div>
@@ -1053,13 +1093,22 @@
   }
 
   function showTab(tab) {
-    ['entry','templates','raw','reports'].forEach(v => {
+    ['entry','templates','raw','reports','dashboard'].forEach(v => {
       document.getElementById(v + 'View').className = 'view' + (v === tab ? ' active' : '');
       const id = 'tab' + v.charAt(0).toUpperCase() + v.slice(1);
       document.getElementById(id).className = 'tab' + (v === tab ? ' active' : '');
     });
     if (tab === 'reports') { renderReports(); renderRawMonthlyReport(); }
     if (tab === 'raw') { renderRawItemSelects(); renderRawStock(); }
+    if (tab === 'dashboard') { renderDashSingle(); renderDashCompare(); }
+  }
+
+  function showDashSub(sub) {
+    ['single','compare'].forEach(v => {
+      document.getElementById('dash' + v.charAt(0).toUpperCase() + v.slice(1) + 'Sub').className = 'subview' + (v === sub ? ' active' : '');
+      document.getElementById('dsub' + v.charAt(0).toUpperCase() + v.slice(1)).className = 'subtab' + (v === sub ? ' active' : '');
+    });
+    if (sub === 'single') renderDashSingle(); else renderDashCompare();
   }
 
   function showRawSub(sub) {
@@ -1432,6 +1481,172 @@
     a.download = `raw-material-${mn}.csv`; a.click();
   }
 
+  // ── DASHBOARD ───────────────────────────────────────────────────
+  function fullDayLabel(ds) {
+    if (!ds) return '';
+    const d = new Date(ds + 'T00:00:00');
+    return d.toLocaleDateString('en-IN', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' });
+  }
+
+  function setDashToday() {
+    document.getElementById('dashDate').value = todayISO();
+    renderDashSingle();
+  }
+
+  function stockAsOf(itemName, date) {
+    const purchased = rawPurchases.filter(p => p.item === itemName && p.date <= date).reduce((s,p) => s + p.qty, 0);
+    const consumed = rawConsumption.filter(c => c.item === itemName && c.date <= date).reduce((s,c) => s + c.qty, 0);
+    return purchased - consumed;
+  }
+
+  function renderDashSingle() {
+    const dateEl = document.getElementById('dashDate');
+    if (!dateEl.value) dateEl.value = todayISO();
+    const date = dateEl.value;
+    document.getElementById('dashDayLabel').textContent = fullDayLabel(date);
+
+    const r = reports.find(x => x.date === date);
+    const dayPurchases = rawPurchases.filter(p => p.date === date);
+    const dayConsumption = rawConsumption.filter(c => c.date === date);
+    const namedItems = rawItems.filter(it => it.name.trim());
+
+    let salesHtml;
+    if (r) {
+      salesHtml = `
+        <div class="mgrid" style="padding:14px">
+          <div class="mm"><div class="mm-label"><i class="ti ti-wallet"></i> Cash</div><div class="mm-val">${fmt(r.cash)}</div></div>
+          <div class="mm"><div class="mm-label"><i class="ti ti-device-mobile"></i> Online</div><div class="mm-val">${fmt(r.online)}</div></div>
+          <div class="mm"><div class="mm-label"><i class="ti ti-bike"></i> Zomato/Swiggy</div><div class="mm-val">${fmt(r.zomato)}</div></div>
+          <div class="mm"><div class="mm-label"><i class="ti ti-user-dollar"></i> Credit</div><div class="mm-val">${fmt(r.credit)}</div></div>
+          <div class="mm"><div class="mm-label">Total Sales</div><div class="mm-val">${fmt(r.totalSales)}</div></div>
+          <div class="mm"><div class="mm-label">Total Expenses</div><div class="mm-val">${fmt(r.totalExp)}</div></div>
+          <div class="mm mm-net ${r.net >= 0 ? 'mm-profit' : 'mm-loss'}" style="grid-column:span 2">
+            <div class="mm-label">${r.net >= 0 ? 'Profit' : 'Loss'}</div>
+            <div class="mm-val">${fmt(r.net)}</div>
+          </div>
+        </div>`;
+    } else {
+      salesHtml = `<div class="empty-state"><i class="ti ti-cash-off"></i><div class="e-title">No sales report saved for this date</div><div class="e-sub">Add it in the Daily Entry tab</div></div>`;
+    }
+
+    const purchHtml = dayPurchases.length ? `<div class="scroll-x"><table class="pl-tbl">
+        <thead><tr><th style="text-align:left">Item</th><th>Qty</th><th>Amount ₹</th></tr></thead>
+        <tbody>${dayPurchases.map(p => `<tr><td style="text-align:left">${p.item}</td><td>${p.qty}${p.unit}</td><td>${fmt(p.amount)}</td></tr>`).join('')}</tbody>
+      </table></div>` : `<div class="hint">No purchases logged for this date.</div>`;
+
+    const consHtml = dayConsumption.length ? `<div class="scroll-x"><table class="pl-tbl">
+        <thead><tr><th style="text-align:left">Item</th><th>Qty Consumed</th></tr></thead>
+        <tbody>${dayConsumption.map(c => `<tr><td style="text-align:left">${c.item}</td><td>${c.qty}${c.unit}</td></tr>`).join('')}</tbody>
+      </table></div>` : `<div class="hint">No consumption logged for this date.</div>`;
+
+    const stockHtml = namedItems.length ? `<div class="scroll-x"><table class="pl-tbl">
+        <thead><tr><th style="text-align:left">Item</th><th>Stock (as of this date)</th></tr></thead>
+        <tbody>${namedItems.map(it => `<tr><td style="text-align:left">${it.name}</td><td>${stockAsOf(it.name, date).toLocaleString('en-IN')}${it.unit}</td></tr>`).join('')}</tbody>
+      </table></div>` : `<div class="hint">No raw items set up yet.</div>`;
+
+    document.getElementById('dashSingleContent').innerHTML = `
+      <div class="tbl-wrap">
+        <div class="tbl-hdr"><i class="ti ti-cash"></i> Sales & Profit / Loss</div>
+        ${salesHtml}
+      </div>
+      <div class="tbl-wrap">
+        <div class="tbl-hdr"><i class="ti ti-truck-delivery"></i> Raw Material Purchased</div>
+        ${purchHtml}
+      </div>
+      <div class="tbl-wrap">
+        <div class="tbl-hdr"><i class="ti ti-chef-hat"></i> Raw Material Consumed (item sold proxy)</div>
+        ${consHtml}
+      </div>
+      <div class="tbl-wrap">
+        <div class="tbl-hdr"><i class="ti ti-box"></i> Stock as of this date</div>
+        ${stockHtml}
+      </div>`;
+  }
+
+  function renderDashCompare() {
+    const aEl = document.getElementById('dashDateA'), bEl = document.getElementById('dashDateB');
+    if (!aEl.value) aEl.value = todayISO();
+    if (!bEl.value) {
+      const d = new Date(aEl.value + 'T00:00:00'); d.setDate(d.getDate() - 7);
+      bEl.value = `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`;
+    }
+    const dateA = aEl.value, dateB = bEl.value;
+    document.getElementById('dashDayA').textContent = fullDayLabel(dateA);
+    document.getElementById('dashDayB').textContent = fullDayLabel(dateB);
+
+    const rA = reports.find(r => r.date === dateA), rB = reports.find(r => r.date === dateB);
+
+    function diffCell(a, b, isMoney) {
+      const d = a - b;
+      const cls = d > 0 ? 'profit' : (d < 0 ? 'loss' : '');
+      const sign = d > 0 ? '+' : '';
+      return `<td class="${cls}">${sign}${isMoney ? fmt(d) : d}</td>`;
+    }
+
+    let salesCompareHtml;
+    if (rA || rB) {
+      const sa = rA ? rA.totalSales : 0, sb = rB ? rB.totalSales : 0;
+      const ea = rA ? rA.totalExp : 0, eb = rB ? rB.totalExp : 0;
+      const na = rA ? rA.net : 0, nb = rB ? rB.net : 0;
+      salesCompareHtml = `<div class="scroll-x"><table class="pl-tbl">
+        <thead><tr><th style="text-align:left">Metric</th><th>${dayLabel(dateA)}</th><th>${dayLabel(dateB)}</th><th>Diff (A − B)</th></tr></thead>
+        <tbody>
+          <tr><td style="text-align:left">Total Sales</td><td>${fmt(sa)}</td><td>${fmt(sb)}</td>${diffCell(sa, sb, true)}</tr>
+          <tr><td style="text-align:left">Cash</td><td>${fmt(rA?rA.cash:0)}</td><td>${fmt(rB?rB.cash:0)}</td>${diffCell(rA?rA.cash:0, rB?rB.cash:0, true)}</tr>
+          <tr><td style="text-align:left">Online</td><td>${fmt(rA?rA.online:0)}</td><td>${fmt(rB?rB.online:0)}</td>${diffCell(rA?rA.online:0, rB?rB.online:0, true)}</tr>
+          <tr><td style="text-align:left">Zomato/Swiggy</td><td>${fmt(rA?rA.zomato:0)}</td><td>${fmt(rB?rB.zomato:0)}</td>${diffCell(rA?rA.zomato:0, rB?rB.zomato:0, true)}</tr>
+          <tr><td style="text-align:left">Credit</td><td>${fmt(rA?rA.credit:0)}</td><td>${fmt(rB?rB.credit:0)}</td>${diffCell(rA?rA.credit:0, rB?rB.credit:0, true)}</tr>
+          <tr><td style="text-align:left">Total Expenses</td><td>${fmt(ea)}</td><td>${fmt(eb)}</td>${diffCell(ea, eb, true)}</tr>
+          <tr class="tr-total"><td style="text-align:left">Net P&L</td><td class="${na>=0?'profit':'loss'}">${fmt(na)}</td><td class="${nb>=0?'profit':'loss'}">${fmt(nb)}</td>${diffCell(na, nb, true)}</tr>
+        </tbody>
+      </table></div>`;
+    } else {
+      salesCompareHtml = `<div class="empty-state"><i class="ti ti-cash-off"></i><div class="e-title">No sales data saved for either date</div></div>`;
+    }
+
+    // Item-level consumption comparison — helps explain WHY sales differ
+    const namedItems = rawItems.filter(it => it.name.trim());
+    const itemRows = namedItems.map(it => {
+      const ca = rawConsumption.filter(c => c.item === it.name && c.date === dateA).reduce((s,c) => s + c.qty, 0);
+      const cb = rawConsumption.filter(c => c.item === it.name && c.date === dateB).reduce((s,c) => s + c.qty, 0);
+      return { name: it.name, unit: it.unit, ca, cb, d: ca - cb };
+    }).filter(x => x.ca > 0 || x.cb > 0).sort((x, y) => Math.abs(y.d) - Math.abs(x.d));
+
+    const consCompareHtml = itemRows.length ? `<div class="scroll-x"><table class="pl-tbl">
+        <thead><tr><th style="text-align:left">Item</th><th>${dayLabel(dateA)}</th><th>${dayLabel(dateB)}</th><th>Diff</th></tr></thead>
+        <tbody>${itemRows.map(x => `<tr><td style="text-align:left">${x.name}</td><td>${x.ca}${x.unit}</td><td>${x.cb}${x.unit}</td><td class="${x.d>0?'profit':(x.d<0?'loss':'')}">${x.d>0?'+':''}${x.d}${x.unit}</td></tr>`).join('')}</tbody>
+      </table></div>` : `<div class="hint">No consumption logged for either date.</div>`;
+
+    // Auto-insight
+    let insight = '';
+    if (rA && rB) {
+      const salesDiff = rA.totalSales - rB.totalSales;
+      if (Math.abs(salesDiff) > 0.5) {
+        const dir = salesDiff > 0 ? 'higher' : 'lower';
+        const top = itemRows.slice(0, 3);
+        const itemsTxt = top.length
+          ? top.map(x => `${x.name} (${x.d > 0 ? '+' : ''}${x.d}${x.unit})`).join(', ')
+          : 'no notable difference in item consumption was logged';
+        insight = `Sales on ${dayLabel(dateA)} were ${fmt(Math.abs(salesDiff))} ${dir} than on ${dayLabel(dateB)}. Biggest consumption differences: ${itemsTxt}.`;
+      } else {
+        insight = `Sales were roughly the same on both dates.`;
+      }
+    } else if (!rA || !rB) {
+      insight = `Add a Daily Entry for both dates to see a full sales comparison.`;
+    }
+
+    document.getElementById('dashCompareContent').innerHTML = `
+      <div class="tbl-wrap">
+        <div class="tbl-hdr"><i class="ti ti-cash"></i> Sales & P&L Comparison</div>
+        ${salesCompareHtml}
+      </div>
+      ${insight ? `<div class="hint" style="background:var(--blue-light);border:1px solid var(--blue-border);border-radius:var(--radius-sm);padding:12px;margin-bottom:14px;color:var(--blue);font-weight:700;line-height:1.5">${insight}</div>` : ''}
+      <div class="tbl-wrap">
+        <div class="tbl-hdr"><i class="ti ti-chef-hat"></i> Item Consumption Comparison</div>
+        ${consCompareHtml}
+      </div>`;
+  }
+
   // PWA Install prompt
   let deferredPrompt = null;
   window.addEventListener('beforeinstallprompt', e => {
@@ -1451,6 +1666,15 @@
   document.getElementById('entryDate').addEventListener('change', loadDateData);
   document.getElementById('rpDate').value = todayISO();
   document.getElementById('rcDate').value = todayISO();
+  document.getElementById('dashDate').value = todayISO();
+  document.getElementById('dashDateA').value = todayISO();
+  (function() {
+    const d = new Date(); d.setDate(d.getDate() - 7);
+    document.getElementById('dashDateB').value = `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`;
+  })();
+  document.getElementById('dashDate').addEventListener('change', renderDashSingle);
+  document.getElementById('dashDateA').addEventListener('change', renderDashCompare);
+  document.getElementById('dashDateB').addEventListener('change', renderDashCompare);
   loadData();
 </script>
 </body>
