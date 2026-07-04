@@ -510,8 +510,56 @@
   .hist-title { font-size: 14px; font-weight: 800; font-family: 'Nunito', sans-serif; color: var(--text); }
   .hist-sub { font-size: 11.5px; color: var(--text3); font-weight: 600; margin-top: 2px; }
   .hist-amt { font-size: 15px; font-weight: 800; font-family: 'Nunito', sans-serif; color: var(--blue); white-space: nowrap; }
-  .hist-del { background: transparent; border: none; color: var(--text3); font-size: 18px; cursor: pointer; padding: 6px; }
+  .hist-actions { display: flex; align-items: center; gap: 0; flex-shrink: 0; }
+  .hist-del, .hist-edit { background: transparent; border: none; color: var(--text3); font-size: 18px; cursor: pointer; padding: 6px; }
   .hist-del:active { color: var(--red); }
+  .hist-edit:active { color: var(--blue-mid); }
+
+  /* BULK ENTRY GRID (raw material purchase / consumption) */
+  .raw-bulk-hdr { display: flex; gap: 8px; padding: 10px 16px 4px; }
+  .raw-bulk-hdr span { font-size: 10px; font-weight: 800; color: var(--text3); text-transform: uppercase; letter-spacing: 0.03em; }
+  .raw-bulk-hdr span:nth-child(1) { flex: 2; min-width: 90px; }
+  .raw-bulk-hdr span:nth-child(2) { flex: 1; min-width: 60px; text-align: right; }
+  .raw-bulk-hdr span:nth-child(3) { flex: 1; min-width: 70px; text-align: right; }
+  .raw-bulk-row { display: flex; gap: 8px; align-items: center; padding: 8px 16px; border-bottom: 1px solid var(--border); }
+  .raw-bulk-row:last-of-type { border-bottom: none; }
+  .raw-bulk-name { flex: 2; min-width: 90px; font-size: 14px; font-weight: 800; font-family: 'Nunito', sans-serif; color: var(--text); }
+  .raw-bulk-rate { flex: 1; min-width: 60px; font-size: 12.5px; font-weight: 700; color: var(--text3); text-align: right; white-space: nowrap; }
+  .raw-bulk-qty {
+    flex: 1; min-width: 70px; padding: 9px 8px; font-size: 14px; font-weight: 700; font-family: 'Nunito', sans-serif;
+    border: 2px solid var(--border-strong); border-radius: var(--radius-sm);
+    background: var(--input-bg); color: var(--text); text-align: right; outline: none;
+  }
+  .raw-bulk-qty:focus { border-color: var(--blue-mid); }
+
+  /* HISTORY DATE SEARCH */
+  .hist-search-row { display: flex; gap: 8px; padding: 8px 16px 4px; align-items: center; }
+  .hist-search-row input { flex: 1; }
+  .hist-clear-btn {
+    padding: 9px 12px; font-size: 12px; font-weight: 800; font-family: 'Nunito', sans-serif;
+    border: 2px solid var(--border-strong); border-radius: var(--radius-sm);
+    background: var(--card); color: var(--text2); cursor: pointer; white-space: nowrap;
+  }
+
+  /* INLINE EDIT ROW */
+  .hist-edit-row { padding: 12px 16px; border-bottom: 1px solid var(--border); background: var(--blue-light); }
+  .hist-edit-row:last-child { border-bottom: none; }
+  .hist-edit-grid { display: flex; gap: 8px; flex-wrap: wrap; margin-bottom: 8px; }
+  .hist-edit-grid > div { flex: 1; min-width: 100px; }
+  .hist-edit-grid label { display: block; font-size: 10px; font-weight: 800; color: var(--text3); text-transform: uppercase; letter-spacing: 0.03em; margin-bottom: 4px; }
+  .hist-edit-in {
+    width: 100%; padding: 8px 10px; font-size: 14px; font-weight: 700; font-family: 'Nunito', sans-serif;
+    border: 2px solid var(--blue-border); border-radius: var(--radius-sm);
+    background: var(--input-bg); color: var(--text); outline: none;
+  }
+  .hist-edit-in:focus { border-color: var(--blue-mid); }
+  .hist-edit-actions { display: flex; gap: 8px; }
+  .hist-edit-save, .hist-edit-cancel {
+    flex: 1; padding: 9px; font-size: 12.5px; font-weight: 800; font-family: 'Nunito', sans-serif;
+    border-radius: var(--radius-sm); cursor: pointer;
+  }
+  .hist-edit-save { border: none; background: var(--green); color: #fff; }
+  .hist-edit-cancel { border: 2px solid var(--border-strong); background: var(--card); color: var(--text2); }
 
   /* STOCK CARDS */
   .stock-card { padding: 13px 16px; border-bottom: 1px solid var(--border); display: flex; align-items: center; gap: 12px; }
@@ -669,25 +717,15 @@
           <label>Date</label>
           <input class="txt-input" type="date" id="rpDate">
         </div>
+        <div class="raw-bulk-hdr"><span>Item</span><span>Rate ₹</span><span>Qty</span></div>
+        <div id="rpBulkGrid"></div>
+        <div class="hint" style="padding:6px 16px 4px">Enter quantity only for the items you purchased today — rows left blank are skipped. Rate is pulled from the price set in the "Items" tab.</div>
         <div class="field-row">
-          <label>Item</label>
-          <select class="sel-input" id="rpItem" onchange="rpItemChange()" style="width:100%"></select>
-        </div>
-        <div class="field-row field-2col">
-          <div><label>Quantity</label><input class="txt-input" type="number" min="0" id="rpQty" placeholder="0" oninput="rpCalc()"></div>
-          <div><label>Rate (₹/unit)</label><input class="txt-input rate-readonly" type="number" min="0" id="rpRate" placeholder="0" readonly oninput="rpCalc()"></div>
-        </div>
-        <div class="field-row">
-          <label>Total Amount (₹) — auto calculated</label>
-          <input class="txt-input rate-readonly" type="number" min="0" id="rpAmount" placeholder="0" readonly>
-        </div>
-        <div class="hint" style="padding:0 16px 4px">Rate is pulled from the price you set for this item in the "Items" tab, and the amount is calculated automatically. Change the price anytime in "Items" if it goes up or down.</div>
-        <div class="field-row">
-          <label>Supplier / Shop Name (optional)</label>
+          <label>Supplier / Shop Name (optional, applies to all rows below)</label>
           <input class="txt-input" type="text" id="rpSupplier" placeholder="e.g. Ramesh Meat Shop">
         </div>
         <div class="field-row">
-          <label>Note (optional)</label>
+          <label>Note (optional, applies to all rows below)</label>
           <input class="txt-input" type="text" id="rpNote" placeholder="Any remarks">
         </div>
         <div class="bill-photo-box">
@@ -698,12 +736,16 @@
           <input type="file" id="rpBillInput" accept="image/*" capture="environment" style="display:none" onchange="onBillSelected(this,'purchase')">
           <img id="rpBillImg" style="display:none">
           <div class="ocr-text" id="rpOcrText" style="display:none"></div>
-          <div class="ocr-note">Works with printed Hindi or English bills — handwriting may not read well. Please double-check quantity, rate and amount after scanning; the numbers above won't fill in automatically.</div>
+          <div class="ocr-note">Works with printed Hindi or English bills — handwriting may not read well. Please double-check quantities after scanning; they won't fill in automatically.</div>
         </div>
-        <button class="save-btn" style="margin:14px 16px 4px;width:calc(100% - 32px)" onclick="saveRawPurchase()"><i class="ti ti-device-floppy"></i> Save Purchase Entry</button>
+        <button class="save-btn" style="margin:14px 16px 4px;width:calc(100% - 32px)" onclick="saveRawPurchaseBulk()"><i class="ti ti-device-floppy"></i> Save All Entries</button>
       </div>
       <div class="sc">
         <div class="sh"><div class="sh-left"><i class="ti ti-history"></i> Recent Purchases</div></div>
+        <div class="hist-search-row">
+          <input class="txt-input" type="date" id="rpSearchDate" oninput="renderRawPurchaseHist()">
+          <button class="hist-clear-btn" onclick="document.getElementById('rpSearchDate').value='';renderRawPurchaseHist()"><i class="ti ti-x"></i> Clear</button>
+        </div>
         <div id="rawPurchaseHist"></div>
       </div>
     </div>
@@ -716,22 +758,21 @@
           <label>Date</label>
           <input class="txt-input" type="date" id="rcDate">
         </div>
+        <div class="raw-bulk-hdr"><span>Item</span><span></span><span>Qty</span></div>
+        <div id="rcBulkGrid"></div>
+        <div class="hint" style="padding:6px 16px 4px">Enter quantity only for the items consumed today — rows left blank are skipped.</div>
         <div class="field-row">
-          <label>Item</label>
-          <select class="sel-input" id="rcItem" style="width:100%"></select>
-        </div>
-        <div class="field-row">
-          <label>Quantity Consumed</label>
-          <input class="txt-input" type="number" min="0" id="rcQty" placeholder="0">
-        </div>
-        <div class="field-row">
-          <label>Note (optional)</label>
+          <label>Note (optional, applies to all rows below)</label>
           <input class="txt-input" type="text" id="rcNote" placeholder="e.g. used for dinner service">
         </div>
-        <button class="save-btn" style="margin:14px 16px 4px;width:calc(100% - 32px);background:var(--red)" onclick="saveRawConsumption()"><i class="ti ti-device-floppy"></i> Save Consumption Entry</button>
+        <button class="save-btn" style="margin:14px 16px 4px;width:calc(100% - 32px);background:var(--red)" onclick="saveRawConsumptionBulk()"><i class="ti ti-device-floppy"></i> Save All Entries</button>
       </div>
       <div class="sc">
         <div class="sh"><div class="sh-left"><i class="ti ti-history"></i> Recent Consumption</div></div>
+        <div class="hist-search-row">
+          <input class="txt-input" type="date" id="rcSearchDate" oninput="renderRawConsumeHist()">
+          <button class="hist-clear-btn" onclick="document.getElementById('rcSearchDate').value='';renderRawConsumeHist()"><i class="ti ti-x"></i> Clear</button>
+        </div>
         <div id="rawConsumeHist"></div>
       </div>
     </div>
@@ -1215,40 +1256,42 @@
         <select class="unit-sel" onchange="rawItems[${i}].unit=this.value;persistRawItems()">
           ${UNITS.map(u => `<option value="${u}" ${it.unit===u?'selected':''}>${u}</option>`).join('')}
         </select>
-        <input class="price-in" type="number" min="0" placeholder="0" value="${it.price || ''}" oninput="rawItems[${i}].price=parseFloat(this.value)||0;persistRawItems();rpItemChange()">
+        <input class="price-in" type="number" min="0" placeholder="0" value="${it.price || ''}" oninput="rawItems[${i}].price=parseFloat(this.value)||0;persistRawItems();renderRawItemSelects()">
         <button class="del-btn" onclick="delRawItem(${i})" aria-label="Remove"><i class="ti ti-trash"></i></button>
       </div>`).join('');
   }
   function addRawItem() { rawItems.push({ name: '', unit: 'kg', price: 0 }); persistRawItems(); renderRawItems(); renderRawItemSelects(); }
   function delRawItem(i) { rawItems.splice(i, 1); persistRawItems(); renderRawItems(); renderRawItemSelects(); }
 
+  // Builds the fixed-column bulk entry grids (Purchase + Consumed) from the named raw items.
+  // Each row's item name is fixed text (not editable here) — only the Qty number input is fillable.
   function renderRawItemSelects() {
-    const opts = rawItems.filter(it => it.name.trim()).map(it => `<option value="${it.name}">${it.name} (${it.unit})</option>`).join('');
-    const placeholder = rawItems.filter(it=>it.name.trim()).length ? opts : `<option value="">Add items in "Items" tab first</option>`;
-    ['rpItem','rcItem'].forEach(id => {
-      const sel = document.getElementById(id);
-      const cur = sel.value;
-      sel.innerHTML = placeholder;
-      if ([...sel.options].some(o => o.value === cur)) sel.value = cur;
-    });
-    rpItemChange();
+    const named = rawItems.filter(it => it.name.trim());
+    const rp = document.getElementById('rpBulkGrid');
+    const rc = document.getElementById('rcBulkGrid');
+    if (!named.length) {
+      rp.innerHTML = `<div class="empty-state"><i class="ti ti-meat"></i><div class="e-title">No items set up</div><div class="e-sub">Add raw material items in the "Items" tab first</div></div>`;
+      rc.innerHTML = `<div class="empty-state"><i class="ti ti-meat"></i><div class="e-title">No items set up</div><div class="e-sub">Add raw material items in the "Items" tab first</div></div>`;
+      return;
+    }
+    rp.innerHTML = named.map(it => `
+      <div class="raw-bulk-row">
+        <div class="raw-bulk-name">${it.name}</div>
+        <div class="raw-bulk-rate">${fmt(it.price || 0)}/${it.unit}</div>
+        <input class="raw-bulk-qty" type="number" min="0" placeholder="0" id="rpQty_${cssId(it.name)}" data-item="${it.name}">
+      </div>`).join('');
+    rc.innerHTML = named.map(it => `
+      <div class="raw-bulk-row">
+        <div class="raw-bulk-name">${it.name}</div>
+        <div class="raw-bulk-rate">${it.unit}</div>
+        <input class="raw-bulk-qty" type="number" min="0" placeholder="0" id="rcQty_${cssId(it.name)}" data-item="${it.name}">
+      </div>`).join('');
   }
+  // Turns an item name into a safe id suffix for the qty inputs
+  function cssId(name) { return name.replace(/[^a-zA-Z0-9]/g, '_'); }
 
   function rawItemUnit(name) { const it = rawItems.find(x => x.name === name); return it ? it.unit : ''; }
   function rawItemPrice(name) { const it = rawItems.find(x => x.name === name); return it ? (it.price || 0) : 0; }
-
-  // ── RAW MATERIAL: Purchase entry ───────────────────────────────
-  // Rate auto-fills from the item's fixed price (set once in the Items tab) whenever the item changes.
-  function rpItemChange() {
-    const item = document.getElementById('rpItem').value;
-    document.getElementById('rpRate').value = item ? rawItemPrice(item) : '';
-    rpCalc();
-  }
-  function rpCalc() {
-    const q = parseFloat(document.getElementById('rpQty').value) || 0;
-    const r = parseFloat(document.getElementById('rpRate').value) || 0;
-    document.getElementById('rpAmount').value = (q && r) ? (q * r).toFixed(2).replace(/\.00$/,'') : '';
-  }
 
   function onBillSelected(input, kind) {
     const file = input.files[0];
@@ -1279,76 +1322,186 @@
     btn.classList.remove('scanning'); btn.innerHTML = '<i class="ti ti-scan"></i> Read Bill Text';
   }
 
-  function saveRawPurchase() {
+  // Saves one purchase entry per item row that has a quantity filled in — a single click for the whole grid.
+  function saveRawPurchaseBulk() {
     const date = document.getElementById('rpDate').value;
-    const item = document.getElementById('rpItem').value;
-    const qty = parseFloat(document.getElementById('rpQty').value) || 0;
-    const rate = parseFloat(document.getElementById('rpRate').value) || 0;
-    const amount = parseFloat(document.getElementById('rpAmount').value) || (qty * rate);
+    if (!date) { showToast('Please select a date'); return; }
+    const named = rawItems.filter(it => it.name.trim());
+    if (!named.length) { showToast('Add raw material items in the "Items" tab first'); return; }
     const supplier = document.getElementById('rpSupplier').value.trim();
     const note = document.getElementById('rpNote').value.trim();
-    if (!date) { showToast('Please select a date'); return; }
-    if (!item) { showToast('Please select an item'); return; }
-    if (!qty) { showToast('Please enter quantity'); return; }
-    const entry = { id: 'rp_' + Date.now() + '_' + Math.random().toString(36).slice(2,7), date, item, unit: rawItemUnit(item), qty, rate, amount, supplier, note, billImg: rpBillDataUrl || null };
-    rawPurchases.unshift(entry);
+    let count = 0;
+    named.forEach(it => {
+      const inp = document.getElementById('rpQty_' + cssId(it.name));
+      const qty = inp ? (parseFloat(inp.value) || 0) : 0;
+      if (!qty) return;
+      const rate = it.price || 0;
+      const amount = qty * rate;
+      const entry = { id: 'rp_' + Date.now() + '_' + Math.random().toString(36).slice(2,7), date, item: it.name, unit: it.unit, qty, rate, amount, supplier, note, billImg: rpBillDataUrl || null };
+      rawPurchases.unshift(entry);
+      count++;
+    });
+    if (!count) { showToast('Enter a quantity for at least one item'); return; }
     rawPurchases.sort((a,b) => b.date.localeCompare(a.date));
     persistRawPurchases();
     renderRawPurchaseHist(); renderRawStock();
-    ['rpQty','rpSupplier','rpNote'].forEach(id => document.getElementById(id).value = '');
-    rpItemChange();
+    named.forEach(it => { const inp = document.getElementById('rpQty_' + cssId(it.name)); if (inp) inp.value = ''; });
+    document.getElementById('rpSupplier').value = '';
+    document.getElementById('rpNote').value = '';
     rpBillDataUrl = null;
     document.getElementById('rpBillImg').style.display = 'none';
     document.getElementById('rpScanBtn').style.display = 'none';
     document.getElementById('rpOcrText').style.display = 'none';
     document.getElementById('rpBillInput').value = '';
-    showToast('Purchase entry saved');
+    showToast(count === 1 ? 'Purchase entry saved' : count + ' purchase entries saved');
   }
 
+  let editingPurchaseId = null;
   function renderRawPurchaseHist() {
     const el = document.getElementById('rawPurchaseHist');
-    if (!rawPurchases.length) { el.innerHTML = `<div class="empty-state"><i class="ti ti-receipt-2"></i><div class="e-title">No purchases yet</div><div class="e-sub">Saved purchase entries will show here</div></div>`; return; }
-    el.innerHTML = rawPurchases.slice(0, 30).map(p => `
+    const searchDate = document.getElementById('rpSearchDate').value;
+    const list = searchDate ? rawPurchases.filter(p => p.date === searchDate) : rawPurchases.slice(0, 30);
+    if (!list.length) {
+      el.innerHTML = searchDate
+        ? `<div class="empty-state"><i class="ti ti-receipt-2"></i><div class="e-title">No purchases on this date</div><div class="e-sub">Try a different date or clear the search</div></div>`
+        : `<div class="empty-state"><i class="ti ti-receipt-2"></i><div class="e-title">No purchases yet</div><div class="e-sub">Saved purchase entries will show here</div></div>`;
+      return;
+    }
+    el.innerHTML = list.map(p => {
+      if (p.id === editingPurchaseId) {
+        return `
+      <div class="hist-edit-row">
+        <div class="hist-edit-grid">
+          <div><label>Date</label><input class="hist-edit-in" type="date" id="epDate_${p.id}" value="${p.date}"></div>
+          <div><label>Qty (${p.unit})</label><input class="hist-edit-in" type="number" min="0" id="epQty_${p.id}" value="${p.qty}"></div>
+        </div>
+        <div class="hist-edit-grid">
+          <div><label>Supplier</label><input class="hist-edit-in" type="text" id="epSupplier_${p.id}" value="${p.supplier || ''}"></div>
+          <div><label>Note</label><input class="hist-edit-in" type="text" id="epNote_${p.id}" value="${p.note || ''}"></div>
+        </div>
+        <div class="hist-edit-actions">
+          <button class="hist-edit-cancel" onclick="editingPurchaseId=null;renderRawPurchaseHist()">Cancel</button>
+          <button class="hist-edit-save" onclick="commitRawPurchaseEdit('${p.id}')"><i class="ti ti-check"></i> Save</button>
+        </div>
+      </div>`;
+      }
+      return `
       <div class="hist-row">
         <div class="hist-main">
           <div class="hist-title">${p.item} — ${p.qty}${p.unit}</div>
           <div class="hist-sub">${dayLabel(p.date)}${p.supplier ? ' · ' + p.supplier : ''}${p.billImg ? ' · <i class="ti ti-photo"></i> bill attached' : ''}</div>
         </div>
         <div class="hist-amt">${fmt(p.amount)}</div>
-        <button class="hist-del" onclick="delRawPurchase('${p.id}')"><i class="ti ti-trash"></i></button>
-      </div>`).join('');
+        <div class="hist-actions">
+          <button class="hist-edit" onclick="editingPurchaseId='${p.id}';renderRawPurchaseHist()"><i class="ti ti-pencil"></i></button>
+          <button class="hist-del" onclick="delRawPurchase('${p.id}')"><i class="ti ti-trash"></i></button>
+        </div>
+      </div>`;
+    }).join('');
+  }
+  function commitRawPurchaseEdit(id) {
+    const p = rawPurchases.find(x => x.id === id);
+    if (!p) return;
+    const date = document.getElementById('epDate_' + id).value;
+    const qty = parseFloat(document.getElementById('epQty_' + id).value) || 0;
+    if (!date) { showToast('Please select a date'); return; }
+    if (!qty) { showToast('Please enter quantity'); return; }
+    p.date = date;
+    p.qty = qty;
+    p.rate = rawItemPrice(p.item) || p.rate;
+    p.amount = qty * p.rate;
+    p.supplier = document.getElementById('epSupplier_' + id).value.trim();
+    p.note = document.getElementById('epNote_' + id).value.trim();
+    rawPurchases.sort((a,b) => b.date.localeCompare(a.date));
+    persistRawPurchases();
+    editingPurchaseId = null;
+    renderRawPurchaseHist(); renderRawStock();
+    showToast('Purchase entry updated');
   }
   function delRawPurchase(id) { rawPurchases = rawPurchases.filter(p => p.id !== id); persistRawPurchases(); renderRawPurchaseHist(); renderRawStock(); }
 
   // ── RAW MATERIAL: Consumption entry ────────────────────────────
-  function saveRawConsumption() {
+  // Saves one consumption entry per item row that has a quantity filled in — a single click for the whole grid.
+  function saveRawConsumptionBulk() {
     const date = document.getElementById('rcDate').value;
-    const item = document.getElementById('rcItem').value;
-    const qty = parseFloat(document.getElementById('rcQty').value) || 0;
-    const note = document.getElementById('rcNote').value.trim();
     if (!date) { showToast('Please select a date'); return; }
-    if (!item) { showToast('Please select an item'); return; }
-    if (!qty) { showToast('Please enter quantity consumed'); return; }
-    const entry = { id: 'rc_' + Date.now() + '_' + Math.random().toString(36).slice(2,7), date, item, unit: rawItemUnit(item), qty, note };
-    rawConsumption.unshift(entry);
+    const named = rawItems.filter(it => it.name.trim());
+    if (!named.length) { showToast('Add raw material items in the "Items" tab first'); return; }
+    const note = document.getElementById('rcNote').value.trim();
+    let count = 0;
+    named.forEach(it => {
+      const inp = document.getElementById('rcQty_' + cssId(it.name));
+      const qty = inp ? (parseFloat(inp.value) || 0) : 0;
+      if (!qty) return;
+      const entry = { id: 'rc_' + Date.now() + '_' + Math.random().toString(36).slice(2,7), date, item: it.name, unit: it.unit, qty, note };
+      rawConsumption.unshift(entry);
+      count++;
+    });
+    if (!count) { showToast('Enter a quantity for at least one item'); return; }
     rawConsumption.sort((a,b) => b.date.localeCompare(a.date));
     persistRawConsumption();
     renderRawConsumeHist(); renderRawStock();
-    ['rcQty','rcNote'].forEach(id => document.getElementById(id).value = '');
-    showToast('Consumption entry saved');
+    named.forEach(it => { const inp = document.getElementById('rcQty_' + cssId(it.name)); if (inp) inp.value = ''; });
+    document.getElementById('rcNote').value = '';
+    showToast(count === 1 ? 'Consumption entry saved' : count + ' consumption entries saved');
   }
 
+  let editingConsumeId = null;
   function renderRawConsumeHist() {
     const el = document.getElementById('rawConsumeHist');
-    if (!rawConsumption.length) { el.innerHTML = `<div class="empty-state"><i class="ti ti-chef-hat"></i><div class="e-title">No consumption entries yet</div><div class="e-sub">Saved entries will show here</div></div>`; return; }
-    el.innerHTML = rawConsumption.slice(0, 30).map(c => `
+    const searchDate = document.getElementById('rcSearchDate').value;
+    const list = searchDate ? rawConsumption.filter(c => c.date === searchDate) : rawConsumption.slice(0, 30);
+    if (!list.length) {
+      el.innerHTML = searchDate
+        ? `<div class="empty-state"><i class="ti ti-chef-hat"></i><div class="e-title">No consumption on this date</div><div class="e-sub">Try a different date or clear the search</div></div>`
+        : `<div class="empty-state"><i class="ti ti-chef-hat"></i><div class="e-title">No consumption entries yet</div><div class="e-sub">Saved entries will show here</div></div>`;
+      return;
+    }
+    el.innerHTML = list.map(c => {
+      if (c.id === editingConsumeId) {
+        return `
+      <div class="hist-edit-row">
+        <div class="hist-edit-grid">
+          <div><label>Date</label><input class="hist-edit-in" type="date" id="ecDate_${c.id}" value="${c.date}"></div>
+          <div><label>Qty (${c.unit})</label><input class="hist-edit-in" type="number" min="0" id="ecQty_${c.id}" value="${c.qty}"></div>
+        </div>
+        <div class="hist-edit-grid">
+          <div><label>Note</label><input class="hist-edit-in" type="text" id="ecNote_${c.id}" value="${c.note || ''}"></div>
+        </div>
+        <div class="hist-edit-actions">
+          <button class="hist-edit-cancel" onclick="editingConsumeId=null;renderRawConsumeHist()">Cancel</button>
+          <button class="hist-edit-save" onclick="commitRawConsumeEdit('${c.id}')"><i class="ti ti-check"></i> Save</button>
+        </div>
+      </div>`;
+      }
+      return `
       <div class="hist-row">
         <div class="hist-main">
           <div class="hist-title">${c.item} — ${c.qty}${c.unit}</div>
           <div class="hist-sub">${dayLabel(c.date)}${c.note ? ' · ' + c.note : ''}</div>
         </div>
-        <button class="hist-del" onclick="delRawConsumption('${c.id}')"><i class="ti ti-trash"></i></button>
-      </div>`).join('');
+        <div class="hist-actions">
+          <button class="hist-edit" onclick="editingConsumeId='${c.id}';renderRawConsumeHist()"><i class="ti ti-pencil"></i></button>
+          <button class="hist-del" onclick="delRawConsumption('${c.id}')"><i class="ti ti-trash"></i></button>
+        </div>
+      </div>`;
+    }).join('');
+  }
+  function commitRawConsumeEdit(id) {
+    const c = rawConsumption.find(x => x.id === id);
+    if (!c) return;
+    const date = document.getElementById('ecDate_' + id).value;
+    const qty = parseFloat(document.getElementById('ecQty_' + id).value) || 0;
+    if (!date) { showToast('Please select a date'); return; }
+    if (!qty) { showToast('Please enter quantity'); return; }
+    c.date = date;
+    c.qty = qty;
+    c.note = document.getElementById('ecNote_' + id).value.trim();
+    rawConsumption.sort((a,b) => b.date.localeCompare(a.date));
+    persistRawConsumption();
+    editingConsumeId = null;
+    renderRawConsumeHist(); renderRawStock();
+    showToast('Consumption entry updated');
   }
   function delRawConsumption(id) { rawConsumption = rawConsumption.filter(c => c.id !== id); persistRawConsumption(); renderRawConsumeHist(); renderRawStock(); }
 
